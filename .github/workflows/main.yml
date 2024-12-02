@@ -1,0 +1,63 @@
+name: Build on Windows with Cygwin
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # Enables manual triggering
+
+jobs:
+  build-windows-cygwin:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Cache Cygwin Installation
+        uses: actions/cache@v3
+        with:
+          path: C:\cygwin64
+          key: ${{ runner.os }}-cygwin-${{ hashFiles('**/Makefile.am') }}
+          restore-keys: |
+            ${{ runner.os }}-cygwin-
+
+      - name: Install Cygwin
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          Invoke-WebRequest -OutFile setup-x86_64.exe https://www.cygwin.com/setup-x86_64.exe
+          Start-Process -FilePath setup-x86_64.exe -ArgumentList "--quiet-mode", "--no-shortcuts", "--only-site", "https://mirrors.kernel.org/cygwin/", "--packages", "bash,make,gcc-core,gcc-g++,libgcc1,libstdc++6,libssl1.1,m4,autoconf,automake,libtool,git,tcl,expect" -Wait
+          Remove-Item setup-x86_64.exe
+
+      - name: Add Cygwin to PATH
+        uses: microsoft/powershell@v2
+        with:
+          inline: |
+            $env:PATH = "C:\cygwin64\bin;" + $env:PATH
+            echo "PATH updated: $env:PATH"
+
+      - name: Verify Cygwin Installation
+        shell: bash
+        run: |
+          bash --version
+          make --version
+          gcc --version
+
+      - name: Make Build Scripts Executable
+        shell: bash
+        run: |
+          chmod +x autogen.sh
+          chmod +x build_cygwin.sh
+
+      - name: Run Build Script
+        shell: bash
+        run: |
+          ./build_cygwin.sh
+
+      - name: Upload Build Artifacts
+        if: success()
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts
+          path: ./out
