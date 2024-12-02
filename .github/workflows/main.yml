@@ -36,26 +36,17 @@ jobs:
           sudo apt update -y
           sudo apt install wget curl ninja-build -y
 
-      - name: Set up cache MSYS2
-        id: cache-msys2
-        uses: actions/cache@v4
+      - uses: msys2/setup-msys2@v2
         with:
-          path: ${{ env.MSYS2_PATH }}
-          key: ${{ runner.os }}-msys2-20240302
-
-      - name: Download and install MSYS2
-        if: steps.cache-msys2.outputs.cache-hit != 'true'
-        run: |
-          wget https://github.com/msys2/msys2-installer/releases/download/2024-01-13/msys2-base-x86_64-20240113.tar.xz
-          sudo mkdir -p ${MSYS2_PATH}
-          sudo tar -xf msys2-base-x86_64-20240113.tar.xz -C /opt
-          
-          # Initialize MSYS2
-          ${MSYS2_PATH}/usr/bin/bash -lc 'exit'
-          
-          # Update MSYS2 packages
-          ${MSYS2_PATH}/usr/bin/bash -lc 'pacman --noconfirm -Syu'
-          ${MSYS2_PATH}/usr/bin/bash -lc 'pacman --noconfirm -S --needed base-devel mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja mingw-w64-x86_64-lz4 mingw-w64-x86_64-zlib'
+          msystem: MINGW64
+          update: true
+          install: >-
+            base-devel
+            mingw-w64-x86_64-toolchain
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-ninja
+            mingw-w64-x86_64-lz4
+            mingw-w64-x86_64-zlib
 
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1.2
@@ -64,25 +55,22 @@ jobs:
           restore-keys: ${{ runner.os }}-msys2
 
       - name: Build erofs-utils
+        shell: msys2 {0}
         run: |
-          # Create build script for MSYS2
-          cat > build_msys2.sh << 'EOF'
-          #!/bin/bash
-          
           VERSION="${{ github.event.inputs.version }}"
           [[ -z "${VERSION}" ]] && VERSION="v1.8.1-24081000"
           
           TARGET_DIR="target/Windows_x86_64/erofs-utils-${VERSION}"
           mkdir -p "${TARGET_DIR}"
           
-          # Build using MSYS2 MinGW64
-          ${MSYS2_PATH}/mingw64/bin/cmake -B build-mingw64 \
+          # Build using MinGW64
+          cmake -B build-mingw64 \
             -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
           
-          ${MSYS2_PATH}/mingw64/bin/cmake --build build-mingw64
+          cmake --build build-mingw64
           
           # Copy built files
           cp build-mingw64/fsck.erofs.exe "${TARGET_DIR}/"
@@ -90,16 +78,12 @@ jobs:
           cp build-mingw64/dump.erofs.exe "${TARGET_DIR}/"
           cp build-mingw64/erofsfuse.exe "${TARGET_DIR}/"
           
-          # Copy required DLLs
-          cp ${MSYS2_PATH}/mingw64/bin/libgcc_s_seh-1.dll "${TARGET_DIR}/"
-          cp ${MSYS2_PATH}/mingw64/bin/libstdc++-6.dll "${TARGET_DIR}/"
-          cp ${MSYS2_PATH}/mingw64/bin/libwinpthread-1.dll "${TARGET_DIR}/"
-          cp ${MSYS2_PATH}/mingw64/bin/liblz4.dll "${TARGET_DIR}/"
-          cp ${MSYS2_PATH}/mingw64/bin/zlib1.dll "${TARGET_DIR}/"
-          EOF
-          
-          chmod +x build_msys2.sh
-          ./build_msys2.sh
+          # Copy required DLLs from MSYS2 environment
+          cp /mingw64/bin/libgcc_s_seh-1.dll "${TARGET_DIR}/"
+          cp /mingw64/bin/libstdc++-6.dll "${TARGET_DIR}/"
+          cp /mingw64/bin/libwinpthread-1.dll "${TARGET_DIR}/"
+          cp /mingw64/bin/liblz4.dll "${TARGET_DIR}/"
+          cp /mingw64/bin/zlib1.dll "${TARGET_DIR}/"
 
       - name: Prepare artifact
         if: success()
