@@ -1,0 +1,106 @@
+name: Build erofs-utils-windows
+on:
+  push:
+    branches: [ "dev" ]
+  workflow_dispatch:
+    inputs:
+      release:
+        description: 'Push a new release'
+        required: false
+        default: 'false'
+      version:
+        description: 'Version'
+        required: false
+        default: 'v1.8.1-24081000'
+
+jobs:
+  build-windows:
+    runs-on: ubuntu-24.04
+    env:
+      TZ: UTC-8
+      CCACHE_COMPILERCHECK: "%compiler% -dumpmachine; %compiler% -dumpversion"
+      CCACHE_NOHASHDIR: "true"
+      CCACHE_HARDLINK: "true"
+      CCACHE_BASEDIR: "${{ github.workspace }}"
+      cygwin_prebuilt_packages: "deb [trusted=yes] https://github.com/affggh/deb-cygwin-debian/releases/download/snapshot-deb ./"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          fetch-depth: 0
+
+      - name: Update system and install dependencies
+        run: |
+          sudo apt update -y
+          sudo apt install llvm ninja-build -y
+
+      - name: Download and install clang+llvm
+        run: |
+          wget https://github.com/llvm/llvm-project/releases/download/llvmorg-17.0.6/clang+llvm-17.0.6-x86_64-linux-gnu-ubuntu-22.04.tar.xz
+          tar -xf clang+llvm-17.0.6-x86_64-linux-gnu-ubuntu-22.04.tar.xz -C /opt
+          echo "CUSTOM_CLANG_PATH=/opt/clang+llvm-17.0.6-x86_64-linux-gnu-ubuntu-22.04" >> $GITHUB_ENV
+
+      - name: Setup cygwin cross toolchains
+        run: |
+          echo "${{ env.cygwin_prebuilt_packages }}" > sources.list
+          sudo cp -af sources.list /etc/apt/sources.list.d/deb-cygwin.list
+          rm -f sources.list
+          sudo apt-get update && sudo apt-get install cygwin cygwin-gcc cygwin-libiconv cygwin-xclang cygwin-libc++
+
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ runner.os }}
+          restore-keys: ${{ runner.os }}
+
+      - name: Build erofs-utils
+        run: |
+          chmod a+x build_cygwin.sh
+          ./build_cygwin.sh
+
+      - name: Prepare artifact
+        if: success()
+        id: Artifact
+        run: |
+          echo "cygwinX86x64Dir=target/Cygwin_x86_64" >> $GITHUB_OUTPUT
+          cygwinX86x64Name=`ls -d target/Cygwin_x86_64/erofs-utils-v*/ | awk -F '(/|.zip)' '{print $3}'` && echo "cygwinX86x64Name=$cygwinX86x64Name" >> $GITHUB_OUTPUT
+
+      - name: Upload erofs-utils Cygwin_x86_64
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.Artifact.outputs.cygwinX86x64Name }}
+          path: "${{ steps.Artifact.outputs.cygwinX86x64Dir }}/${{ steps.Artifact.outputs.cygwinX86x64Name }}/*"
+
+  release:
+    needs: [ build-windows ]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    if: github.event.inputs.release == 'true'
+    steps:
+      - uses: actions/download-artifact@v4
+
+      - name: Version
+        run: |
+          ARTIFACT_DIR=$(ls)
+          for name in ${ARTIFACT_DIR}; do
+            chmod +x ${name}/*
+            touch -c -d "2009-01-01 00:00:00" ${name}/*
+            zip -9 -jy "${name}.zip" ${name}/* > /dev/null 2>&1
+          done
+          ls -lahR
+
+      - name: Upload release
+        uses: ncipollo/release-action@v1
+        with:
+          allowUpdates: true
+          omitBodyDuringUpdate: true
+          removeArtifacts: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+          name: ${{ github.event.inputs.version }}
+          tag: ${{ github.event.inputs.version }}
+          body: This release is built by github-action.
+          artifacts: "*.zip"
