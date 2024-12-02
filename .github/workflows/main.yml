@@ -31,11 +31,11 @@ jobs:
           Remove-Item setup-x86_64.exe
 
       - name: Add Cygwin to PATH
-        uses: microsoft/powershell@v2
+        uses: actions/setup-powershell@v2
         with:
-          inline: |
+          inlineScript: |
             $env:PATH = "C:\cygwin64\bin;" + $env:PATH
-            echo "PATH updated: $env:PATH"
+            Write-Output "PATH updated: $env:PATH"
 
       - name: Verify Cygwin Installation
         shell: bash
