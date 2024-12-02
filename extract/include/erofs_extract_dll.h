@@ -11,6 +11,15 @@
     #define EROFS_API
 #endif
 
+// Set options for extraction
+typedef struct {
+    bool overwrite;
+    bool preserve_owner;
+    bool preserve_perms;
+    bool silent;
+    unsigned int num_threads;
+} erofs_extract_options;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -31,14 +40,6 @@ EROFS_API int erofs_extract_all(void);
 EROFS_API int erofs_extract_configs(void);
 
 // Set options for extraction
-typedef struct {
-    bool overwrite;
-    bool preserve_owner;
-    bool preserve_perms;
-    bool silent;
-    unsigned int num_threads;
-} erofs_extract_options;
-
 EROFS_API int erofs_extract_set_options(const erofs_extract_options* options);
 
 // Get the last error message
