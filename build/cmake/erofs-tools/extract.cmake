@@ -5,29 +5,17 @@ set(TARGET_extract "extract.erofs")
 
 set(TARGET_SRC_DIR "${PROJECT_ROOT_DIR}/extract")
 
-# First, create the DLL source and header files
-file(WRITE "${TARGET_SRC_DIR}/erofs_extract_dll.h"
-"#ifndef EROFS_EXTRACT_DLL_H
-#define EROFS_EXTRACT_DLL_H
-// ... [content of erofs_extract_dll.h] ...
-#endif")
-
-file(WRITE "${TARGET_SRC_DIR}/erofs_extract_dll.cpp"
-"#include \"erofs_extract_dll.h\"
-// ... [content of erofs_extract_dll.cpp] ...")
-
 # Collect source files but exclude main.cpp for the DLL
 file(GLOB extract_lib_srcs 
     "${TARGET_SRC_DIR}/*.cpp"
 )
 list(FILTER extract_lib_srcs EXCLUDE REGEX ".*main\\.cpp$")
-list(APPEND extract_lib_srcs "${TARGET_SRC_DIR}/erofs_extract_dll.cpp")
 
 # Build the DLL
 add_library(${TARGET_extract_dll} SHARED ${extract_lib_srcs})
 target_include_directories(${TARGET_extract_dll} 
     PUBLIC
-        "${TARGET_SRC_DIR}"  # Include directory for all headers
+        "${TARGET_SRC_DIR}"
     PRIVATE
         ${common_headers}
 )

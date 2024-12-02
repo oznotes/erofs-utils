@@ -6,8 +6,6 @@
 #include <thread>
 #include <string>
 
-#define EROFS_EXTRACT_EXPORTS
-
 using namespace skkk;
 
 static std::string last_error;
@@ -73,7 +71,7 @@ EROFS_API int erofs_extract_path(const char* target_path, bool recursive) {
             return RET_EXTRACT_CREATE_DIR_FAIL;
         }
 
-        err = doInitNode(target_path, recursive);
+        err = initErofsNodeByTargetPath(target_path);
         if (err) {
             set_error("Failed to initialize target node");
             return RET_EXTRACT_INIT_NODE_FAIL;
