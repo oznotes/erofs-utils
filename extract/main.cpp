@@ -30,7 +30,7 @@ static inline void get_available_compressors(string &ret) {
 		if (comma)
 			ret.append(", ");
 		ret.append(s->name);
-		comma = true;
+		comma = true; 
 	}
 }
 
