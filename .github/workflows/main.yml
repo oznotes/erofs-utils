@@ -22,8 +22,7 @@ jobs:
       CCACHE_NOHASHDIR: "true"
       CCACHE_HARDLINK: "true"
       CCACHE_BASEDIR: "${{ github.workspace }}"
-      BUILD_DIR: "./build/cmake"
-      OUT_DIR: "./out"
+      OUT_DIR: "build"
 
     steps:
       - name: Checkout
@@ -70,8 +69,14 @@ jobs:
           mkdir -p ${OUT_DIR}
           mkdir -p ${TARGET_DIR}
           
+          # Ensure CMakeLists.txt exists in the root directory
+          if [ ! -f "CMakeLists.txt" ]; then
+            echo "Error: CMakeLists.txt not found in root directory"
+            exit 1
+          fi
+          
           # Build using MinGW64
-          cmake -S ${BUILD_DIR} -B ${OUT_DIR} \
+          cmake -B ${OUT_DIR} \
             -G Ninja \
             -DCMAKE_SYSTEM_NAME=Windows \
             -DCMAKE_SYSTEM_PROCESSOR=x86_64 \
@@ -88,13 +93,13 @@ jobs:
           time -p ninja -C ${OUT_DIR}
           
           # Check and copy built files
-          BUILD_DIR="${OUT_DIR}/erofs-tools"
-          for binary in dump.erofs fsck.erofs mkfs.erofs extract.erofs; do
-            if [ ! -f "${BUILD_DIR}/${binary}.exe" ]; then
+          # Check and copy built files
+          for binary in fsck.erofs mkfs.erofs dump.erofs erofsfuse; do
+            if [ ! -f "${OUT_DIR}/${binary}.exe" ]; then
               echo "Error: ${binary}.exe not found"
               exit 1
             fi
-            cp -af "${BUILD_DIR}/${binary}.exe" "${TARGET_DIR}/"
+            cp -af "${OUT_DIR}/${binary}.exe" "${TARGET_DIR}/"
           done
           
           # Copy required MinGW DLLs
