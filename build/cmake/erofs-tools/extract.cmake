@@ -15,8 +15,9 @@ list(FILTER extract_lib_srcs EXCLUDE REGEX ".*main\\.cpp$")
 add_library(${TARGET_extract_dll} SHARED ${extract_lib_srcs})
 target_include_directories(${TARGET_extract_dll} 
     PUBLIC
-        "${TARGET_SRC_DIR}"
+        "${TARGET_SRC_DIR}/include"    # Public headers location
     PRIVATE
+        "${TARGET_SRC_DIR}"
         ${common_headers}
 )
 target_link_libraries(${TARGET_extract_dll} ${common_static_link_lib})
@@ -27,7 +28,7 @@ target_compile_definitions(${TARGET_extract_dll} PRIVATE EROFS_EXTRACT_EXPORTS)
 file(GLOB extract_exe_srcs "${TARGET_SRC_DIR}/*.cpp")
 add_executable(${TARGET_extract} ${extract_exe_srcs})
 target_include_directories(${TARGET_extract} PRIVATE
-        "${TARGET_SRC_DIR}/include"
+        "${TARGET_SRC_DIR}/include"    # Headers location
         ${common_headers}
 )
 target_link_libraries(${TARGET_extract} ${common_static_link_lib})
