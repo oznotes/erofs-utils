@@ -60,7 +60,7 @@ jobs:
           chmod a+x build_cygwin.sh
           ./build_cygwin.sh
 
-      - name: Prepare artifact
+- name: Prepare artifact
         if: success()
         id: Artifact
         run: |
@@ -77,12 +77,20 @@ jobs:
           DLL_DIR="target/DLL_x86_64/erofs-utils-${VERSION}-${TIMESTAMP}"
           mkdir -p "${DLL_DIR}"
           
-          # Copy DLL and header
-          cp build/erofs-tools/liberofs_extract.dll "${DLL_DIR}/"
-          cp extract/include/erofs_extract_dll.h "${DLL_DIR}/"
+          # Find and copy DLL and header
+          # First, find the DLL (it might be named cygerofs_extract.dll)
+          find . -name "cygerofs_extract*.dll" -o -name "liberofs_extract*.dll" -exec cp {} "${DLL_DIR}/" \;
+          cp extract/erofs_extract_dll.h "${DLL_DIR}/"
           
-          echo "dllX86x64Dir=target/DLL_x86_64" >> $GITHUB_OUTPUT
-          echo "dllX86x64Name=erofs-utils-${VERSION}-${TIMESTAMP}" >> $GITHUB_OUTPUT
+          # Only proceed if we found the DLL
+          if [ -f "${DLL_DIR}"/*erofs_extract*.dll ]; then
+            echo "dllX86x64Dir=target/DLL_x86_64" >> $GITHUB_OUTPUT
+            echo "dllX86x64Name=erofs-utils-${VERSION}-${TIMESTAMP}" >> $GITHUB_OUTPUT
+          else
+            echo "Warning: DLL not found in expected locations"
+            ls -R build/
+            ls -R out/
+          fi
 
       - name: Upload erofs-utils Cygwin_x86_64
         if: success()
