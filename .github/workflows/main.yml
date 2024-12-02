@@ -1,131 +1,60 @@
-name: Build erofs-utils-msys2
+name: Build on Windows with MSYS2
+
 on:
   push:
-    branches: [ "dev" ]
-  workflow_dispatch:
-    inputs:
-      release:
-        description: 'Push a new release'
-        required: false
-        default: 'false'
-      version:
-        description: 'Version'
-        required: false
-        default: 'v1.8.1-24081000'
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # Enables manual triggering
 
 jobs:
-  build-msys2:
-    runs-on: ubuntu-latest
-    env:
-      TZ: UTC-8
-      CCACHE_COMPILERCHECK: "%compiler% -dumpmachine; %compiler% -dumpversion"
-      CCACHE_NOHASHDIR: "true"
-      CCACHE_HARDLINK: "true"
-      CCACHE_BASEDIR: "${{ github.workspace }}"
-      MSYS2_PATH: "/opt/msys64"
+  build-windows-msys2:
+    runs-on: windows-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: 'recursive'
-          fetch-depth: 0
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-      - name: Update system and install dependencies
+      - name: Cache MSYS2 Installation
+        uses: actions/cache@v3
+        with:
+          path: C:\msys64
+          key: ${{ runner.os }}-msys2-${{ hashFiles('**/Makefile.am') }}
+          restore-keys: |
+            ${{ runner.os }}-msys2-
+
+      - name: Install MSYS2
+        shell: pwsh
         run: |
-          sudo apt update -y
-          sudo apt install wget curl ninja-build -y
+          Invoke-WebRequest -Uri https://repo.msys2.org/distrib/x86_64/msys2-x86_64-20220419.exe -OutFile msys2-installer.exe -UseBasicParsing -Verbose
+          & .\msys2-installer.exe /S /D=C:\msys64
+          Remove-Item msys2-installer.exe -Force -Verbose
 
-      - uses: msys2/setup-msys2@v2
-        with:
-          msystem: MINGW64
-          update: true
-          install: >-
-            base-devel
-            mingw-w64-x86_64-toolchain
-            mingw-w64-x86_64-cmake
-            mingw-w64-x86_64-ninja
-            mingw-w64-x86_64-lz4
-            mingw-w64-x86_64-zlib
-
-      - name: Setup ccache
-        uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          key: ${{ runner.os }}-msys2
-          restore-keys: ${{ runner.os }}-msys2
-
-      - name: Build erofs-utils
-        shell: msys2 {0}
+      - name: Update MSYS2 and Install Packages
+        shell: pwsh
         run: |
-          VERSION="${{ github.event.inputs.version }}"
-          [[ -z "${VERSION}" ]] && VERSION="v1.8.1-24081000"
-          
-          TARGET_DIR="target/Windows_x86_64/erofs-utils-${VERSION}"
-          mkdir -p "${TARGET_DIR}"
-          
-          # Build using MinGW64
-          cmake -B build-mingw64 \
-            -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
-            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
-          
-          cmake --build build-mingw64
-          
-          # Copy built files
-          cp build-mingw64/fsck.erofs.exe "${TARGET_DIR}/"
-          cp build-mingw64/mkfs.erofs.exe "${TARGET_DIR}/"
-          cp build-mingw64/dump.erofs.exe "${TARGET_DIR}/"
-          cp build-mingw64/erofsfuse.exe "${TARGET_DIR}/"
-          
-          # Copy required DLLs from MSYS2 environment
-          cp /mingw64/bin/libgcc_s_seh-1.dll "${TARGET_DIR}/"
-          cp /mingw64/bin/libstdc++-6.dll "${TARGET_DIR}/"
-          cp /mingw64/bin/libwinpthread-1.dll "${TARGET_DIR}/"
-          cp /mingw64/bin/liblz4.dll "${TARGET_DIR}/"
-          cp /mingw64/bin/zlib1.dll "${TARGET_DIR}/"
+          C:\msys64\usr\bin\bash.exe -c "pacman -Syu --noconfirm"
+          C:\msys64\usr\bin\bash.exe -c "pacman -S --noconfirm base-devel git make autoconf automake libtool gcc mingw-w64-x86_64-gcc"
 
-      - name: Prepare artifact
+      - name: Add MSYS2 to PATH
+        shell: pwsh
+        run: |
+          $env:PATH = "C:\msys64\usr\bin;C:\msys64\mingw64\bin;" + $env:PATH
+          Write-Output "PATH updated: $env:PATH"
+
+      - name: Make Build Scripts Executable
+        shell: pwsh
+        run: |
+          bash -c "chmod +x autogen.sh build.sh"
+
+      - name: Run Build Script
+        shell: pwsh
+        run: |
+          bash -c "./build.sh"
+
+      - name: Upload Build Artifacts
         if: success()
-        id: Artifact
-        run: |
-          echo "windowsX86x64Dir=target/Windows_x86_64" >> $GITHUB_OUTPUT
-          windowsX86x64Name=`ls -d target/Windows_x86_64/erofs-utils-v*/ | awk -F '(/|.zip)' '{print $3}'` && echo "windowsX86x64Name=$windowsX86x64Name" >> $GITHUB_OUTPUT
-
-      - name: Upload erofs-utils Windows_x86_64
-        if: success()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
-          name: ${{ steps.Artifact.outputs.windowsX86x64Name }}
-          path: '${{ steps.Artifact.outputs.windowsX86x64Dir }}/${{ steps.Artifact.outputs.windowsX86x64Name }}/*'
-
-  release:
-    needs: [ build-msys2 ]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    if: github.event.inputs.release == 'true'
-    steps:
-      - uses: actions/download-artifact@v4
-
-      - name: Version
-        run: |
-          ARTIFACT_DIR=$(ls)
-          for name in ${ARTIFACT_DIR}; do
-            chmod +x ${name}/*
-            touch -c -d "2009-01-01 00:00:00" ${name}/*
-            zip -9 -jy "${name}.zip" ${name}/* > /dev/null 2>&1
-          done
-          ls -lahR
-
-      - name: Upload release
-        uses: ncipollo/release-action@v1
-        with:
-          allowUpdates: true
-          omitBodyDuringUpdate: true
-          removeArtifacts: true
-          token: ${{ secrets.GITHUB_TOKEN }}
-          name: ${{ github.event.inputs.version }}
-          tag: ${{ github.event.inputs.version }}
-          body: This release is built by github-action.
-          artifacts: "*.zip"
+          name: build-artifacts
+          path: ./out
