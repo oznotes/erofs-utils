@@ -11,7 +11,7 @@ on:
       version:
         description: 'Version'
         required: false
-        default: 'v1.8.1-24081000'
+        default: ''
 
 jobs:
   build-windows:
@@ -22,6 +22,8 @@ jobs:
       CCACHE_NOHASHDIR: "true"
       CCACHE_HARDLINK: "true"
       CCACHE_BASEDIR: "${{ github.workspace }}"
+      BUILD_DIR: "./build/cmake"
+      OUT_DIR: "./out"
 
     steps:
       - name: Checkout
@@ -47,32 +49,53 @@ jobs:
           key: ${{ runner.os }}-mingw
           restore-keys: ${{ runner.os }}-mingw
 
+      - name: Get version
+        id: version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            VERSION="v$(. scripts/get-version-number)"
+            echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build erofs-utils
         run: |
-          VERSION="${{ github.event.inputs.version }}"
-          [[ -z "${VERSION}" ]] && VERSION="v1.8.1-24081000"
+          VERSION="${{ steps.version.outputs.version }}"
+          TARGET_NAME="erofs-utils-${VERSION}-Windows_x86_64-$(TZ=UTC-8 date +%y%m%d%H%M)"
+          TARGET_DIR="target/Windows_x86_64/${TARGET_NAME}"
           
-          TARGET_DIR="target/Windows_x86_64/erofs-utils-${VERSION}"
-          mkdir -p "${TARGET_DIR}"
+          # Create output directories
+          rm -rf ${OUT_DIR} > /dev/null 2>&1
+          mkdir -p ${OUT_DIR}
+          mkdir -p ${TARGET_DIR}
           
           # Build using MinGW64
-          cmake -B build-mingw64 \
+          cmake -S ${BUILD_DIR} -B ${OUT_DIR} \
             -G Ninja \
             -DCMAKE_SYSTEM_NAME=Windows \
+            -DCMAKE_SYSTEM_PROCESSOR=x86_64 \
             -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
             -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++ \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DCMAKE_FIND_ROOT_PATH=/usr/x86_64-w64-mingw32
+            -DCMAKE_FIND_ROOT_PATH=/usr/x86_64-w64-mingw32 \
+            -DENABLE_FULL_LTO=ON \
+            -DMAX_BLOCK_SIZE=4096
           
-          cmake --build build-mingw64
+          # Build with ninja
+          time -p ninja -C ${OUT_DIR}
           
-          # Copy built files
-          cp build-mingw64/fsck.erofs.exe "${TARGET_DIR}/"
-          cp build-mingw64/mkfs.erofs.exe "${TARGET_DIR}/"
-          cp build-mingw64/dump.erofs.exe "${TARGET_DIR}/"
-          cp build-mingw64/erofsfuse.exe "${TARGET_DIR}/"
+          # Check and copy built files
+          BUILD_DIR="${OUT_DIR}/erofs-tools"
+          for binary in dump.erofs fsck.erofs mkfs.erofs extract.erofs; do
+            if [ ! -f "${BUILD_DIR}/${binary}.exe" ]; then
+              echo "Error: ${binary}.exe not found"
+              exit 1
+            fi
+            cp -af "${BUILD_DIR}/${binary}.exe" "${TARGET_DIR}/"
+          done
           
           # Copy required MinGW DLLs
           cp /usr/x86_64-w64-mingw32/lib/libwinpthread-1.dll "${TARGET_DIR}/"
@@ -84,6 +107,10 @@ jobs:
           unzip -j lz4_win64_v1_9_4.zip dll/liblz4.dll -d "${TARGET_DIR}"
           wget -q https://github.com/madler/zlib/releases/download/v1.3/zlib13.zip
           unzip -j zlib13.zip zlib1.dll -d "${TARGET_DIR}"
+          
+          # Set file timestamps
+          touch -c -d "2009-01-01 00:00:00" ${TARGET_DIR}/*
+          echo "Build successful: ${TARGET_NAME}"
 
       - name: Prepare artifact
         if: success()
@@ -125,7 +152,7 @@ jobs:
           omitBodyDuringUpdate: true
           removeArtifacts: true
           token: ${{ secrets.GITHUB_TOKEN }}
-          name: ${{ github.event.inputs.version }}
-          tag: ${{ github.event.inputs.version }}
+          name: ${{ steps.version.outputs.version }}
+          tag: ${{ steps.version.outputs.version }}
           body: This release is built by github-action.
           artifacts: "*.zip"
