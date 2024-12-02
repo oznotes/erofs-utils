@@ -1,62 +1,147 @@
-name: Build on Windows with Cygwin
-
+name: Build erofs-utils-msys2
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-  workflow_dispatch:  # Enables manual triggering
+    branches: [ "dev" ]
+  workflow_dispatch:
+    inputs:
+      release:
+        description: 'Push a new release'
+        required: false
+        default: 'false'
+      version:
+        description: 'Version'
+        required: false
+        default: 'v1.8.1-24081000'
 
 jobs:
-  build-windows-cygwin:
-    runs-on: windows-latest
+  build-msys2:
+    runs-on: ubuntu-latest
+    env:
+      TZ: UTC-8
+      CCACHE_COMPILERCHECK: "%compiler% -dumpmachine; %compiler% -dumpversion"
+      CCACHE_NOHASHDIR: "true"
+      CCACHE_HARDLINK: "true"
+      CCACHE_BASEDIR: "${{ github.workspace }}"
+      MSYS2_PATH: "/opt/msys64"
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-
-      - name: Cache Cygwin Installation
-        uses: actions/cache@v3
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
-          path: C:\cygwin64
-          key: ${{ runner.os }}-cygwin-${{ hashFiles('**/Makefile.am') }}
-          restore-keys: |
-            ${{ runner.os }}-cygwin-
+          submodules: 'recursive'
+          fetch-depth: 0
 
-      - name: Install Cygwin
-        if: steps.cache.outputs.cache-hit != 'true'
+      - name: Update system and install dependencies
         run: |
-          Invoke-WebRequest -OutFile setup-x86_64.exe https://www.cygwin.com/setup-x86_64.exe
-          Start-Process -FilePath setup-x86_64.exe -ArgumentList "--quiet-mode", "--no-shortcuts", "--only-site", "https://mirrors.kernel.org/cygwin/", "--packages", "bash,make,gcc-core,gcc-g++,libgcc1,libstdc++6,libssl1.1,m4,autoconf,automake,libtool,git,tcl,expect" -Wait
-          Remove-Item setup-x86_64.exe
+          sudo apt update -y
+          sudo apt install wget curl ninja-build -y
 
-      - name: Add Cygwin to PATH
-        shell: pwsh
+      - name: Set up cache MSYS2
+        id: cache-msys2
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.MSYS2_PATH }}
+          key: ${{ runner.os }}-msys2-20240302
+
+      - name: Download and install MSYS2
+        if: steps.cache-msys2.outputs.cache-hit != 'true'
         run: |
-          $env:PATH = "C:\cygwin64\bin;" + $env:PATH
-          Write-Output "PATH updated: $env:PATH"
+          wget https://github.com/msys2/msys2-installer/releases/download/2024-01-13/msys2-base-x86_64-20240113.tar.xz
+          sudo mkdir -p ${MSYS2_PATH}
+          sudo tar -xf msys2-base-x86_64-20240113.tar.xz -C /opt
+          
+          # Initialize MSYS2
+          ${MSYS2_PATH}/usr/bin/bash -lc 'exit'
+          
+          # Update MSYS2 packages
+          ${MSYS2_PATH}/usr/bin/bash -lc 'pacman --noconfirm -Syu'
+          ${MSYS2_PATH}/usr/bin/bash -lc 'pacman --noconfirm -S --needed base-devel mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja mingw-w64-x86_64-lz4 mingw-w64-x86_64-zlib'
 
-      - name: Verify Cygwin Installation
-        shell: bash
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ runner.os }}-msys2
+          restore-keys: ${{ runner.os }}-msys2
+
+      - name: Build erofs-utils
         run: |
-          bash --version
-          make --version
-          gcc --version
+          # Create build script for MSYS2
+          cat > build_msys2.sh << 'EOF'
+          #!/bin/bash
+          
+          VERSION="${{ github.event.inputs.version }}"
+          [[ -z "${VERSION}" ]] && VERSION="v1.8.1-24081000"
+          
+          TARGET_DIR="target/Windows_x86_64/erofs-utils-${VERSION}"
+          mkdir -p "${TARGET_DIR}"
+          
+          # Build using MSYS2 MinGW64
+          ${MSYS2_PATH}/mingw64/bin/cmake -B build-mingw64 \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+          
+          ${MSYS2_PATH}/mingw64/bin/cmake --build build-mingw64
+          
+          # Copy built files
+          cp build-mingw64/fsck.erofs.exe "${TARGET_DIR}/"
+          cp build-mingw64/mkfs.erofs.exe "${TARGET_DIR}/"
+          cp build-mingw64/dump.erofs.exe "${TARGET_DIR}/"
+          cp build-mingw64/erofsfuse.exe "${TARGET_DIR}/"
+          
+          # Copy required DLLs
+          cp ${MSYS2_PATH}/mingw64/bin/libgcc_s_seh-1.dll "${TARGET_DIR}/"
+          cp ${MSYS2_PATH}/mingw64/bin/libstdc++-6.dll "${TARGET_DIR}/"
+          cp ${MSYS2_PATH}/mingw64/bin/libwinpthread-1.dll "${TARGET_DIR}/"
+          cp ${MSYS2_PATH}/mingw64/bin/liblz4.dll "${TARGET_DIR}/"
+          cp ${MSYS2_PATH}/mingw64/bin/zlib1.dll "${TARGET_DIR}/"
+          EOF
+          
+          chmod +x build_msys2.sh
+          ./build_msys2.sh
 
-      - name: Make Build Scripts Executable
-        shell: bash
-        run: |
-          chmod +x autogen.sh
-          chmod +x build_cygwin.sh
-
-      - name: Run Build Script
-        shell: bash
-        run: |
-          ./build_cygwin.sh
-
-      - name: Upload Build Artifacts
+      - name: Prepare artifact
         if: success()
-        uses: actions/upload-artifact@v3
+        id: Artifact
+        run: |
+          echo "windowsX86x64Dir=target/Windows_x86_64" >> $GITHUB_OUTPUT
+          windowsX86x64Name=`ls -d target/Windows_x86_64/erofs-utils-v*/ | awk -F '(/|.zip)' '{print $3}'` && echo "windowsX86x64Name=$windowsX86x64Name" >> $GITHUB_OUTPUT
+
+      - name: Upload erofs-utils Windows_x86_64
+        if: success()
+        uses: actions/upload-artifact@v4
         with:
-          name: build-artifacts
-          path: ./out
+          name: ${{ steps.Artifact.outputs.windowsX86x64Name }}
+          path: '${{ steps.Artifact.outputs.windowsX86x64Dir }}/${{ steps.Artifact.outputs.windowsX86x64Name }}/*'
+
+  release:
+    needs: [ build-msys2 ]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    if: github.event.inputs.release == 'true'
+    steps:
+      - uses: actions/download-artifact@v4
+
+      - name: Version
+        run: |
+          ARTIFACT_DIR=$(ls)
+          for name in ${ARTIFACT_DIR}; do
+            chmod +x ${name}/*
+            touch -c -d "2009-01-01 00:00:00" ${name}/*
+            zip -9 -jy "${name}.zip" ${name}/* > /dev/null 2>&1
+          done
+          ls -lahR
+
+      - name: Upload release
+        uses: ncipollo/release-action@v1
+        with:
+          allowUpdates: true
+          omitBodyDuringUpdate: true
+          removeArtifacts: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+          name: ${{ github.event.inputs.version }}
+          tag: ${{ github.event.inputs.version }}
+          body: This release is built by github-action.
+          artifacts: "*.zip"
