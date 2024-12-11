@@ -31,10 +31,21 @@ target_compile_definitions(${TARGET_extract_dll} PRIVATE
         __CYGWIN_USE_WINDOWS_PRINTF  # Add this
         __CYGWIN_USE_WINDOWS_DLLMAIN) # Add this
 
+# DLL-specific settings for Cygwin
 if(CYGWIN)
+    target_compile_definitions(${TARGET_extract_dll} PRIVATE
+            EROFS_EXTRACT_EXPORTS
+            _GNU_SOURCE
+            __CYGWIN_USE_WINDOWS_PRINTF
+            __CYGWIN_USE_WINDOWS_DLLMAIN)
+
     set_target_properties(${TARGET_extract_dll} PROPERTIES
-            ENABLE_EXPORTS ON
-            LINK_FLAGS "-Wl,--export-all-symbols")
+            LINK_FLAGS "-Wl,--export-all-symbols -Wl,--enable-auto-import -no-undefined"
+            PREFIX ""
+            IMPORT_PREFIX "lib"
+            IMPORT_SUFFIX ".dll.a"
+            LINKER_LANGUAGE CXX
+            ENABLE_EXPORTS ON)
 endif()
 
 # Original executable build

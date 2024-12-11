@@ -71,9 +71,21 @@ elseif (CMAKE_SYSTEM_NAME MATCHES "Linux|Android")
 		list(APPEND GLOBAL_CFLAGS "-DANDROID" "-mllvm" "-polly")
 	endif ()
 elseif (CMAKE_SYSTEM_NAME MATCHES "CYGWIN")
-	list(APPEND CMAKE_CXX_FLAGS "-stdlib=libc++ -static")
-	list(APPEND GLOBAL_LDFLAGS "-static" "-stdlib=libc++")
-	list(APPEND GLOBAL_LDFLAGS_RELEASE "-Wl,-s,-x,--gc-sections")
+	# Replace the existing CYGWIN block with this:
+	list(APPEND CMAKE_CXX_FLAGS "-stdlib=libc++")
+	if(BUILD_SHARED_LIBS)
+		list(APPEND GLOBAL_LDFLAGS
+				"-Wl,--export-all-symbols"
+				"-Wl,--no-undefined"
+				"-Wl,--enable-auto-import"
+				"-Wl,--exclude-libs,ALL"
+				"-Wl,--out-implib,liberofs_extract.dll.a"
+				"-no-undefined"
+				"-nostdlib")
+	else()
+		list(APPEND GLOBAL_LDFLAGS "-static" "-stdlib=libc++")
+		list(APPEND GLOBAL_LDFLAGS_RELEASE "-Wl,-s,-x,--gc-sections")
+	endif()
 endif ()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
