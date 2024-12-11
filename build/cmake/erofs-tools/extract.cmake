@@ -26,8 +26,6 @@ target_compile_options(${TARGET_extract_dll} PRIVATE
     "-fno-exceptions"  # Disable exceptions
 )
 
-target_compile_options(${TARGET_extract_dll} PRIVATE -fvisibility=default)
-
 target_compile_definitions(${TARGET_extract_dll} PRIVATE
         EROFS_EXTRACT_EXPORTS
         _GNU_SOURCE
