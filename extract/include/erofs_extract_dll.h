@@ -1,6 +1,9 @@
 #ifndef EROFS_EXTRACT_DLL_H
 #define EROFS_EXTRACT_DLL_H
 
+// Force exports by defining this before the check
+#define EROFS_EXTRACT_EXPORTS
+
 #ifdef _WIN32
     #ifdef EROFS_EXTRACT_EXPORTS
         #define EROFS_API __declspec(dllexport)
