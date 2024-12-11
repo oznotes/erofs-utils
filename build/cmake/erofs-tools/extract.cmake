@@ -28,10 +28,17 @@ target_compile_options(${TARGET_extract_dll} PRIVATE
 
 target_compile_options(${TARGET_extract_dll} PRIVATE -fvisibility=default)
 
-target_compile_definitions(${TARGET_extract_dll} PRIVATE 
-    EROFS_EXTRACT_EXPORTS
-    _GNU_SOURCE
-)
+target_compile_definitions(${TARGET_extract_dll} PRIVATE
+        EROFS_EXTRACT_EXPORTS
+        _GNU_SOURCE
+        __CYGWIN_USE_WINDOWS_PRINTF  # Add this
+        __CYGWIN_USE_WINDOWS_DLLMAIN) # Add this
+
+if(CYGWIN)
+    set_target_properties(${TARGET_extract_dll} PROPERTIES
+            ENABLE_EXPORTS ON
+            LINK_FLAGS "-Wl,--export-all-symbols")
+endif()
 
 # Original executable build
 file(GLOB extract_exe_srcs "${TARGET_SRC_DIR}/*.cpp")
