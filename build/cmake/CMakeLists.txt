@@ -34,18 +34,22 @@ endif ()
 
 # Compile flags
 set(GLOBAL_CFLAGS
-		"-Wformat"
-		"-Werror=format-security"
-		"-fdata-sections"
-		"-ffunction-sections"
-		"-funwind-tables"
-		"-fstack-protector-strong"
+	"-Wformat"
+	"-Werror=format-security"
+	"-fdata-sections"
+	"-ffunction-sections"
+	"-fvisibility=hidden"
+	"-fvisibility-inlines-hidden"
+	"-funwind-tables"
+	"-fstack-protector-strong"
+	"-fno-exceptions"
+	"-fno-rtti"
 )
-
-if(NOT CYGWIN)
+if (NOT CYGWIN)
+	# Cygwin libcxx has not impl yet.
 	list(APPEND GLOBAL_CFLAGS
-			"-fno-exceptions"
-			"-fno-rtti"
+		"-nostdinc++"
+		"-no-canonical-prefixes"
 	)
 endif()
 
@@ -71,21 +75,9 @@ elseif (CMAKE_SYSTEM_NAME MATCHES "Linux|Android")
 		list(APPEND GLOBAL_CFLAGS "-DANDROID" "-mllvm" "-polly")
 	endif ()
 elseif (CMAKE_SYSTEM_NAME MATCHES "CYGWIN")
-	# Replace the existing CYGWIN block with this:
-	list(APPEND CMAKE_CXX_FLAGS "-stdlib=libc++")
-	if(BUILD_SHARED_LIBS)
-		list(APPEND GLOBAL_LDFLAGS
-				"-Wl,--export-all-symbols"
-				"-Wl,--no-undefined"
-				"-Wl,--enable-auto-import"
-				"-Wl,--exclude-libs,ALL"
-				"-Wl,--out-implib,liberofs_extract.dll.a"
-				"-no-undefined"
-				"-nostdlib")
-	else()
-		list(APPEND GLOBAL_LDFLAGS "-static" "-stdlib=libc++")
-		list(APPEND GLOBAL_LDFLAGS_RELEASE "-Wl,-s,-x,--gc-sections")
-	endif()
+	list(APPEND CMAKE_CXX_FLAGS "-stdlib=libc++ -static")
+	list(APPEND GLOBAL_LDFLAGS "-static" "-stdlib=libc++")
+	list(APPEND GLOBAL_LDFLAGS_RELEASE "-Wl,-s,-x,--gc-sections")
 endif ()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
@@ -129,21 +121,6 @@ configure_file(
 # Git clone submodule
 execute_process(COMMAND git submodule init)
 execute_process(COMMAND git submodule update)
-
-# DLL-specific settings
-if(CYGWIN)
-	set(CYGWIN_DLL_FLAGS
-			-fno-strict-aliasing
-			-fno-omit-frame-pointer
-			-fno-exceptions
-			-fno-rtti)
-
-	set(CYGWIN_DLL_LINK_FLAGS
-			-Wl,--export-all-symbols
-			-Wl,--enable-auto-import)
-
-	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${CYGWIN_DLL_LINK_FLAGS}")
-endif()
 
 # Start building
 add_subdirectory(lib)
