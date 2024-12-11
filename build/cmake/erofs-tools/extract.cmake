@@ -20,7 +20,6 @@ target_include_directories(${TARGET_extract_dll}
         ${common_headers}
 )
 
-# DLL-specific settings for Cygwin
 if(CYGWIN)
     target_compile_definitions(${TARGET_extract_dll} PRIVATE
             EROFS_EXTRACT_EXPORTS
@@ -28,21 +27,19 @@ if(CYGWIN)
             __CYGWIN_USE_WINDOWS_PRINTF
             __CYGWIN_USE_WINDOWS_DLLMAIN)
 
-    target_link_libraries(${TARGET_extract_dll}
-            ${common_static_link_lib}
-            -static
-            -stdlib=libc++
-            c++
-            c++abi
-            pthread)
-
     set_target_properties(${TARGET_extract_dll} PROPERTIES
             LINK_FLAGS "-Wl,--export-all-symbols -Wl,--enable-auto-import -no-undefined"
             PREFIX ""
             IMPORT_PREFIX "lib"
             IMPORT_SUFFIX ".dll.a"
-            LINKER_LANGUAGE CXX
-            ENABLE_EXPORTS ON)
+            LINKER_LANGUAGE CXX)
+
+    target_link_libraries(${TARGET_extract_dll}
+            ${common_static_link_lib}
+            -static-libstdc++
+            -static-libgcc
+            c++
+            c++abi)
 else()
     target_link_libraries(${TARGET_extract_dll} ${common_static_link_lib})
 endif()
