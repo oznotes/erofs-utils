@@ -34,22 +34,18 @@ endif ()
 
 # Compile flags
 set(GLOBAL_CFLAGS
-	"-Wformat"
-	"-Werror=format-security"
-	"-fdata-sections"
-	"-ffunction-sections"
-	#"-fvisibility=hidden"
-	#"-fvisibility-inlines-hidden"
-	"-funwind-tables"
-	"-fstack-protector-strong"
-	"-fno-exceptions"
-	"-fno-rtti"
+		"-Wformat"
+		"-Werror=format-security"
+		"-fdata-sections"
+		"-ffunction-sections"
+		"-funwind-tables"
+		"-fstack-protector-strong"
 )
-if (NOT CYGWIN)
-	# Cygwin libcxx has not impl yet.
+
+if(NOT CYGWIN)
 	list(APPEND GLOBAL_CFLAGS
-		"-nostdinc++"
-		"-no-canonical-prefixes"
+			"-fno-exceptions"
+			"-fno-rtti"
 	)
 endif()
 
@@ -121,6 +117,21 @@ configure_file(
 # Git clone submodule
 execute_process(COMMAND git submodule init)
 execute_process(COMMAND git submodule update)
+
+# DLL-specific settings
+if(CYGWIN)
+	set(CYGWIN_DLL_FLAGS
+			-fno-strict-aliasing
+			-fno-omit-frame-pointer
+			-fno-exceptions
+			-fno-rtti)
+
+	set(CYGWIN_DLL_LINK_FLAGS
+			-Wl,--export-all-symbols
+			-Wl,--enable-auto-import)
+
+	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${CYGWIN_DLL_LINK_FLAGS}")
+endif()
 
 # Start building
 add_subdirectory(lib)

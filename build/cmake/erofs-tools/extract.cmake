@@ -23,7 +23,6 @@ target_link_libraries(${TARGET_extract_dll} ${common_static_link_lib})
 target_compile_options(${TARGET_extract_dll} PRIVATE 
     ${common_compile_flags} 
     "-Wno-unused-result"
-    "-fno-exceptions"  # Disable exceptions
 )
 
 target_compile_definitions(${TARGET_extract_dll} PRIVATE
