@@ -2,13 +2,13 @@
 #define EROFS_EXTRACT_DLL_H
 
 #ifdef _WIN32
-#ifdef EROFS_EXTRACT_EXPORTS
+    #ifdef EROFS_EXTRACT_EXPORTS
         #define EROFS_API __declspec(dllexport) __attribute__((used)) __attribute__((visibility("default")))
     #else
         #define EROFS_API __declspec(dllimport)
     #endif
 #else
-#define EROFS_API __attribute__((visibility("default")))
+        #define EROFS_API __attribute__((visibility("default")))
 #endif
 
 #ifdef __cplusplus
@@ -24,11 +24,10 @@ typedef struct erofs_extract_options {
     unsigned int num_threads;
 } erofs_extract_options;
 
-// Return codes
-#define RET_EXTRACT_DONE 0
-#define RET_EXTRACT_ERROR -1
+// Include the original state definitions
+#include "ExtractState.h"
 
-// API Functions - note the EROFS_API prefix
+// API Functions
 EROFS_API int __attribute__((used)) erofs_extract_init(const char* image_path);
 EROFS_API int __attribute__((used)) erofs_extract_set_outdir(const char* out_dir);
 EROFS_API int __attribute__((used)) erofs_extract_path(const char* target_path, bool recursive);
