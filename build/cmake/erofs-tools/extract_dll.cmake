@@ -33,11 +33,11 @@ target_link_libraries(${TARGET_extract_dll} PRIVATE
         ${common_static_link_lib}
 )
 
-# Configure exports and DLL properties
+# Use def file for explicit export control
 set_target_properties(${TARGET_extract_dll} PROPERTIES
         PREFIX ""
         OUTPUT_NAME "cygerofs_extract"
-        LINK_FLAGS "-Wl,--export-dynamic -Wl,--enable-auto-import"
+        LINK_FLAGS "-Wl,--no-export-all-symbols -Wl,--enable-auto-import -Wl,--def,${CMAKE_SOURCE_DIR}/extract/erofs_extract.def"
 )
 
 # Installation
