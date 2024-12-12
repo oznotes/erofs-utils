@@ -2,7 +2,7 @@
 #define EROFS_EXTRACT_DLL_H
 
 #if defined(_WIN32) || defined(__CYGWIN__)
-#ifdef EROFS_EXTRACT_EXPORTS
+    #ifdef EROFS_EXTRACT_EXPORTS
         // Building DLL - export
         #define EROFS_API __declspec(dllexport)
     #else
@@ -10,7 +10,7 @@
         #define EROFS_API __declspec(dllimport)
     #endif
 #else
-#define EROFS_API __attribute__((visibility("default")))
+    #define EROFS_API __attribute__((visibility("default")))
 #endif
 
 #ifdef __cplusplus
