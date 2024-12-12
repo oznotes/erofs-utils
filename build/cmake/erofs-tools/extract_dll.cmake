@@ -16,7 +16,7 @@ target_include_directories(${TARGET_extract_dll} PRIVATE
 )
 
 target_compile_definitions(${TARGET_extract_dll} PRIVATE
-        EROFS_EXTRACT_EXPORTS
+        EROFS_EXTRACT_EXPORTS=1
         _FILE_OFFSET_BITS=64
         _LARGEFILE_SOURCE
         _LARGEFILE64_SOURCE
@@ -25,19 +25,17 @@ target_compile_definitions(${TARGET_extract_dll} PRIVATE
 
 target_compile_options(${TARGET_extract_dll} PRIVATE
         -fvisibility=hidden
-        -fdata-sections
-        -ffunction-sections
 )
 
 target_link_libraries(${TARGET_extract_dll} PRIVATE
         ${common_static_link_lib}
 )
 
-# DLL specific settings
+# DLL specific settings with proper export handling
 set_target_properties(${TARGET_extract_dll} PROPERTIES
         PREFIX ""
         OUTPUT_NAME "cygerofs_extract"
-        LINK_FLAGS "-Wl,--enable-auto-import -Wl,--out-implib,libcygerofs_extract.dll.a -Wl,--exclude-all-symbols -shared"
+        LINK_FLAGS "-Wl,--enable-auto-import -Wl,--exclude-all-symbols -Wl,--output-def=${CMAKE_CURRENT_BINARY_DIR}/cygerofs_extract.def"
 )
 
 # Installation
