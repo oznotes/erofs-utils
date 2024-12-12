@@ -23,7 +23,6 @@ target_compile_definitions(${TARGET_extract_dll} PRIVATE
         CYGWIN
 )
 
-# Hide all symbols by default
 target_compile_options(${TARGET_extract_dll} PRIVATE
         -fvisibility=hidden
         -fdata-sections
@@ -34,14 +33,11 @@ target_link_libraries(${TARGET_extract_dll} PRIVATE
         ${common_static_link_lib}
 )
 
-# Configure the .def file path
-set(DEF_FILE "${CMAKE_CURRENT_SOURCE_DIR}/erofs_extract.def")
-
-# Use def file and strict export control
+# Configure exports and DLL properties
 set_target_properties(${TARGET_extract_dll} PROPERTIES
         PREFIX ""
         OUTPUT_NAME "cygerofs_extract"
-        LINK_FLAGS "-Wl,--kill-at -Wl,--enable-auto-import -Wl,--def,${DEF_FILE}"
+        LINK_FLAGS "-Wl,--export-dynamic -Wl,--enable-auto-import"
 )
 
 # Installation
@@ -49,6 +45,3 @@ install(TARGETS ${TARGET_extract_dll}
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib
 )
-
-# Add a message to help debug the path
-message(STATUS "DEF file path: ${DEF_FILE}")
