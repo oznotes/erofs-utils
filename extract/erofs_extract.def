@@ -1,9 +1,0 @@
-EXPORTS
-    erofs_extract_init
-    erofs_extract_set_outdir
-    erofs_extract_path
-    erofs_extract_all
-    erofs_extract_configs
-    erofs_extract_set_options
-    erofs_extract_get_error
-    erofs_extract_cleanup
