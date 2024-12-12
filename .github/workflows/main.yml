@@ -60,21 +60,6 @@ jobs:
           chmod a+x build_cygwin.sh
           ./build_cygwin.sh
 
-      # Add this section in the build-windows job
-      - name: Build DLL
-        run: |
-          mkdir -p build_dll
-          cd build_dll
-          cmake ../extract -DCMAKE_TOOLCHAIN_FILE=../toolchain-cygwin.cmake \
-                -DCMAKE_BUILD_TYPE=Release \
-                -DBUILD_DLL=ON
-          cmake --build . --config Release
-
-      - name: Verify DLL Exports
-        run: |
-          nm -D build_dll/erofs_extract.dll | grep ' T ' || true
-          objdump -p build_dll/erofs_extract.dll | grep "Export Table" -A 20 || true
-
       - name: Prepare artifact
         if: success()
         id: Artifact
