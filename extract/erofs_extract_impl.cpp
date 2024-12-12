@@ -14,6 +14,15 @@ using namespace skkk;
 
 static std::string last_error;
 
+typedef struct erofs_extract_options {
+    bool overwrite;
+    bool preserve_owner;
+    bool preserve_perms;
+    bool silent;
+    unsigned int num_threads;
+} erofs_extract_options;
+
+
 static void set_error(const char* msg) {
     last_error = msg;
 }
