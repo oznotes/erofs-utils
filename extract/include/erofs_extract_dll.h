@@ -1,20 +1,24 @@
 #ifndef EROFS_EXTRACT_DLL_H
 #define EROFS_EXTRACT_DLL_H
 
-// Force exports by defining this before the check
+// Force exports by defining this during DLL build
 #define EROFS_EXTRACT_EXPORTS
 
 #ifdef _WIN32
-    #ifdef EROFS_EXTRACT_EXPORTS
-        #define EROFS_API __declspec(dllexport)
+#ifdef EROFS_EXTRACT_EXPORTS
+        #define EROFS_API __declspec(dllexport) __attribute__((used))
     #else
         #define EROFS_API __declspec(dllimport)
     #endif
 #else
-    #define EROFS_API
+#define EROFS_API __attribute__((visibility("default")))
 #endif
 
-// Set options for extraction
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Keep existing struct definition
 typedef struct {
     bool overwrite;
     bool preserve_owner;
@@ -22,10 +26,6 @@ typedef struct {
     bool silent;
     unsigned int num_threads;
 } erofs_extract_options;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 // Initialize the erofs extractor with an image file
 EROFS_API int erofs_extract_init(const char* image_path);
