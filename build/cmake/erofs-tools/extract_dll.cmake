@@ -8,7 +8,6 @@ add_library(${TARGET_extract_dll} SHARED
     ${TARGET_SRC_DIR}/ExtractHelper.cpp
     ${TARGET_SRC_DIR}/ErofsNode.cpp
     ${TARGET_SRC_DIR}/ErofsHardlinkHandle.cpp
-    ${TARGET_SRC_DIR}/erofs_extract.def  # Add the DEF file here
 )
 
 target_include_directories(${TARGET_extract_dll} PRIVATE
@@ -26,25 +25,26 @@ target_compile_definitions(${TARGET_extract_dll} PRIVATE
 
 target_compile_options(${TARGET_extract_dll} PRIVATE
     -fvisibility=hidden
-    -fvisibility-inlines-hidden
 )
 
 target_link_libraries(${TARGET_extract_dll} PRIVATE
     ${common_static_link_lib}
 )
 
-# Linker flags for Windows/Cygwin
-target_link_options(${TARGET_extract_dll} PRIVATE
-    -Wl,--enable-auto-import
-    -Wl,--enable-runtime-pseudo-reloc
-    -Wl,--output-def=${CMAKE_CURRENT_BINARY_DIR}/cygerofs_extract.def
-)
-
-# Ensure proper DLL naming
+# Configure exports
 set_target_properties(${TARGET_extract_dll} PROPERTIES 
     PREFIX ""
     OUTPUT_NAME "cygerofs_extract"
-    WINDOWS_EXPORT_ALL_SYMBOLS OFF
+    LINK_FLAGS "-Wl,--export-all-symbols -Wl,--out-implib,libcygerofs_extract.dll.a -Wl,--enable-auto-import"
+)
+
+# Generate the def file during build
+add_custom_command(TARGET ${TARGET_extract_dll} POST_BUILD
+    COMMAND ${CMAKE_DLLTOOL} --export-all-symbols
+            -D cygerofs_extract.dll
+            -l libcygerofs_extract.dll.a
+            ${TARGET_SRC_DIR}/erofs_extract_dll.cpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
 # Installation
