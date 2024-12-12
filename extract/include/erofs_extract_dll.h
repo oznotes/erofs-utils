@@ -24,14 +24,20 @@ typedef struct erofs_extract_options {
 } erofs_extract_options;
 
 // API Functions
-EROFS_API int erofs_extract_init(const char* image_path);
-EROFS_API int erofs_extract_set_outdir(const char* out_dir);
-EROFS_API int erofs_extract_path(const char* target_path, bool recursive);
-EROFS_API int erofs_extract_all(void);
-EROFS_API int erofs_extract_configs(void);
-EROFS_API int erofs_extract_set_options(const erofs_extract_options* options);
-EROFS_API const char* erofs_extract_get_error(void);
-EROFS_API void erofs_extract_cleanup(void);
+#if defined(__GNUC__) && !defined(__clang__)
+#define EROFS_EXPORT __attribute__((dllexport))
+#else
+#define EROFS_EXPORT
+#endif
+
+EROFS_API EROFS_EXPORT int erofs_extract_init(const char* image_path);
+EROFS_API EROFS_EXPORT int erofs_extract_set_outdir(const char* out_dir);
+EROFS_API EROFS_EXPORT int erofs_extract_path(const char* target_path, bool recursive);
+EROFS_API EROFS_EXPORT int erofs_extract_all(void);
+EROFS_API EROFS_EXPORT int erofs_extract_configs(void);
+EROFS_API EROFS_EXPORT int erofs_extract_set_options(const erofs_extract_options* options);
+EROFS_API EROFS_EXPORT const char* erofs_extract_get_error(void);
+EROFS_API EROFS_EXPORT void erofs_extract_cleanup(void);
 
 #ifdef __cplusplus
 }

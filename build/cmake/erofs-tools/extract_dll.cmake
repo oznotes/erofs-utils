@@ -26,7 +26,6 @@ target_compile_definitions(${TARGET_extract_dll} PRIVATE
 # Hide all symbols by default
 target_compile_options(${TARGET_extract_dll} PRIVATE
         -fvisibility=hidden
-        -fvisibility-inlines-hidden
         -fdata-sections
         -ffunction-sections
 )
@@ -35,11 +34,11 @@ target_link_libraries(${TARGET_extract_dll} PRIVATE
         ${common_static_link_lib}
 )
 
-# Strict linker control for exports
+# Use def file and strict export control
 set_target_properties(${TARGET_extract_dll} PROPERTIES
         PREFIX ""
         OUTPUT_NAME "cygerofs_extract"
-        LINK_FLAGS "-Wl,--version-script=${TARGET_SRC_DIR}/version.map -Wl,--gc-sections"
+        LINK_FLAGS "-Wl,--kill-at -Wl,--no-export-all-symbols -Wl,--enable-auto-import -Wl,--def ${TARGET_SRC_DIR}/erofs_extract.def"
 )
 
 # Installation
