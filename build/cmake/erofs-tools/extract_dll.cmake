@@ -17,7 +17,7 @@ target_include_directories(${TARGET_extract_dll} PRIVATE
 )
 
 target_compile_definitions(${TARGET_extract_dll} PRIVATE
-        EROFS_EXTRACT_EXPORTS
+        EROFS_EXTRACT_EXPORTS=1
         _FILE_OFFSET_BITS=64
         _LARGEFILE_SOURCE
         _LARGEFILE64_SOURCE

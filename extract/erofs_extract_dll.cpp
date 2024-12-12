@@ -1,5 +1,9 @@
+#ifdef EROFS_EXTRACT_EXPORTS  // Only build these wrappers when building DLL
+
 #include "erofs_extract_dll.h"
 #include "erofs_extract_impl.h"
+
+extern "C" {
 
 EROFS_API int erofs_extract_init(const char* image_path) {
     return erofs_extract_init_impl(image_path);
@@ -32,3 +36,7 @@ EROFS_API const char* erofs_extract_get_error(void) {
 EROFS_API void erofs_extract_cleanup(void) {
     erofs_extract_cleanup_impl();
 }
+
+}  // extern "C"
+
+#endif  // EROFS_EXTRACT_EXPORTS
