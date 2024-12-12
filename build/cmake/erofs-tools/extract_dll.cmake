@@ -4,6 +4,7 @@ set(TARGET_SRC_DIR "${PROJECT_ROOT_DIR}/extract")
 # DLL-specific CMake configuration
 add_library(${TARGET_extract_dll} SHARED
         ${TARGET_SRC_DIR}/erofs_extract_dll.cpp
+        ${TARGET_SRC_DIR}/erofs_extract_impl.cpp
         ${TARGET_SRC_DIR}/ExtractOperation.cpp
         ${TARGET_SRC_DIR}/ExtractHelper.cpp
         ${TARGET_SRC_DIR}/ErofsNode.cpp
