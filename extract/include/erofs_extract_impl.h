@@ -1,6 +1,8 @@
 #ifndef EROFS_EXTRACT_IMPL_H
 #define EROFS_EXTRACT_IMPL_H
 
+#include "erofs_extract_dll.h"
+
 // Internal implementation functions - no exports needed
 int erofs_extract_init_impl(const char* image_path);
 int erofs_extract_set_outdir_impl(const char* out_dir);
