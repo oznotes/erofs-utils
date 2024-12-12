@@ -23,14 +23,27 @@ target_compile_definitions(${TARGET_extract_dll} PRIVATE
         CYGWIN
 )
 
+target_compile_options(${TARGET_extract_dll} PRIVATE
+        -fvisibility=hidden
+        -fvisibility-inlines-hidden
+)
+
 target_link_libraries(${TARGET_extract_dll} PRIVATE
         ${common_static_link_lib}
+)
+
+# Windows/Cygwin specific linker flags for proper exports
+target_link_options(${TARGET_extract_dll} PRIVATE
+        -Wl,--export-all-symbols
+        -Wl,--enable-auto-import
+        -Wl,--enable-runtime-pseudo-reloc
 )
 
 # Ensure proper DLL naming
 set_target_properties(${TARGET_extract_dll} PROPERTIES
         PREFIX ""
         OUTPUT_NAME "cygerofs_extract"
+        WINDOWS_EXPORT_ALL_SYMBOLS ON
 )
 
 # Installation
