@@ -49,12 +49,14 @@ EROFS_API int EROFS_CALL erofs_extract_init(const char* image_path) {
     printf("Entering erofs_extract_init\n");
     if (!image_path) {
         printf("Invalid image path\n");
+        g_ctx->op->setLastError("Invalid image path (null)");
         return RET_EXTRACT_INIT_FAIL;
     }
     printf("Image path: %s\n", image_path);
 
     if (g_ctx) {
         printf("Already initialized\n");
+        g_ctx->op->setLastError("Context already initialized");
         return RET_EXTRACT_INIT_FAIL;
     }
 
@@ -65,18 +67,25 @@ EROFS_API int EROFS_CALL erofs_extract_init(const char* image_path) {
         return RET_EXTRACT_INIT_FAIL;
     }
 
-    printf("Initializing EROFS config...\n");
-    // Initialize erofs config
-    erofs_init_configure();
-    cfg.c_dbg_lvl = EROFS_ERR;
+    try {
+        printf("Initializing EROFS config...\n");
+        erofs_init_configure();
+        cfg.c_dbg_lvl = EROFS_ERR;
 
-    printf("Setting default configuration...\n");
-    // Set default configuration
-    init_default_config();
+        printf("Setting default configuration...\n");
+        init_default_config();
 
-    printf("Setting image path...\n");
-    g_ctx->op->setImgPath(image_path);
-    g_ctx->op->setLastError("");
+        printf("Setting image path...\n");
+        g_ctx->op->setImgPath(image_path);
+        g_ctx->op->setLastError("");
+    } catch (const std::exception& e) {
+        char errBuf[256];
+        snprintf(errBuf, sizeof(errBuf), "Exception during initialization: %s", e.what());
+        g_ctx->op->setLastError(errBuf);
+        delete g_ctx;
+        g_ctx = nullptr;
+        return RET_EXTRACT_INIT_FAIL;
+    }
 
     // Check if file exists first
     FILE* f = fopen(image_path, "rb");
@@ -237,11 +246,17 @@ EROFS_API int erofs_extract_set_options(const erofs_extract_options* options) {
     return RET_EXTRACT_DONE;
 }
 
-EROFS_API const char* erofs_extract_get_error(void) {
-    if (!g_ctx || !g_ctx->initialized) {
-        return "DLL not initialized";
+EROFS_API const char* EROFS_CALL erofs_extract_get_error(void) {
+    if (!g_ctx) {
+        static const char* not_init = "DLL not initialized (context is null)";
+        return not_init;
     }
-    return g_ctx->op->getLastError();
+    if (!g_ctx->initialized) {
+        static const char* not_init_flag = "DLL not initialized (flag is false)";
+        return not_init_flag;
+    }
+    const char* err = g_ctx->op->getLastError();
+    return err && *err ? err : "Unknown error";
 }
 
 EROFS_API void __cdecl erofs_extract_cleanup(void) {
