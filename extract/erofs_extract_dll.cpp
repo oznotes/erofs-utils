@@ -5,7 +5,14 @@
 
 extern "C" {
 
-EROFS_API int erofs_extract_init(const char* image_path) {
+EROFS_API int __cdecl erofs_extract_init(const char* image_path) {
+    OutputDebugStringA("Entering erofs_extract_init\n");
+    if (!image_path) {
+        OutputDebugStringA("Invalid image path\n");
+        set_error("Invalid image path");
+        return -1;
+    }
+    OutputDebugStringA("Image path valid\n");
     return erofs_extract_init_impl(image_path);
 }
 

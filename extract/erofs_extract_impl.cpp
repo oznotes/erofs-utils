@@ -19,10 +19,13 @@ static void set_error(const char* msg) {
 }
 
 int erofs_extract_init_impl(const char* image_path) {
+    OutputDebugStringA("Entering erofs_extract_init_impl\n");
     if (!image_path) {
+        OutputDebugStringA("Invalid image path in impl\n");
         set_error("Invalid image path");
         return RET_EXTRACT_INIT_FAIL;
     }
+    OutputDebugStringA("Initializing erofs config\n");
 
     // Initialize erofs config
     erofs_init_configure();
