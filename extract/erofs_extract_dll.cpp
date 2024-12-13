@@ -47,18 +47,19 @@ EROFS_API int __cdecl erofs_extract_init(const char* image_path) {
     cfg.c_dbg_lvl = EROFS_ERR;
 
     ctx->op->setImgPath(image_path);
+    ctx->op->setLastError("");
 
     // Open the device
     int err = erofs_dev_open(&g_sbi, image_path, O_RDONLY);
     if (err) {
-        set_context_error(ctx, "Failed to open image file");
+        ctx->op->setLastError("Failed to open image file");
         return RET_EXTRACT_INIT_FAIL;
     }
 
     // Read superblock
     err = erofs_read_superblock(&g_sbi);
     if (err) {
-        set_context_error(ctx, "Failed to read superblock");
+        ctx->op->setLastError("Failed to read superblock");
         return RET_EXTRACT_INIT_FAIL;
     }
 
@@ -89,14 +90,17 @@ EROFS_API int erofs_extract_path(const char* target_path, bool recursive) {
     ctx->targetPath = target_path;
     ctx->check_decomp = true;
     ctx->isExtractTarget = true;
+    ctx->targetConfigRecurse = recursive;
 
     int err = ctx->createExtractConfigDir() & ctx->createExtractOutDir();
     if (err) {
+        ctx->setLastError("Failed to create output directories");
         return RET_EXTRACT_CREATE_DIR_FAIL;
     }
 
     err = initErofsNodeByTargetPath(target_path);
     if (err) {
+        ctx->setLastError("Failed to initialize target node");
         return RET_EXTRACT_INIT_NODE_FAIL;
     }
 

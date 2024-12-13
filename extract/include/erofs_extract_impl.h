@@ -13,4 +13,6 @@ int erofs_extract_set_options_impl(const erofs_extract_options* options);
 const char* erofs_extract_get_error_impl(void);
 void erofs_extract_cleanup_impl(void);
 
+int initErofsNodeByTargetPath(const char* target_path);
+
 #endif // EROFS_EXTRACT_IMPL_H
