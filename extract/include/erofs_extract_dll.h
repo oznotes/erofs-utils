@@ -1,6 +1,8 @@
 #ifndef EROFS_EXTRACT_DLL_H
 #define EROFS_EXTRACT_DLL_H
 
+#include "ExtractState.h"  // Include this first to get the enums
+
 #ifdef EROFS_EXTRACT_EXPORTS
 #define EROFS_API __declspec(dllexport) __attribute__((cdecl))
 #else
@@ -18,9 +20,6 @@ typedef struct erofs_extract_options {
     bool silent;
     unsigned int num_threads;
 } erofs_extract_options;
-
-// Return codes
-#define RET_EXTRACT_DONE 0
 
 // API Functions
 EROFS_API int __cdecl erofs_extract_init(const char* image_path);
