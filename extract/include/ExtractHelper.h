@@ -108,7 +108,6 @@ namespace skkk {
 	 * @param target_path Path to initialize
 	 * @return Status code
 	 */
-	int initErofsNodeByTargetPath(const char* target_path);
 	int initErofsNodeByTargetPath(const string& target_path);
 
 	/**

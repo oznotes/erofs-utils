@@ -2,6 +2,7 @@
 
 #include "erofs_extract_dll.h"
 #include "ExtractOperation.h"
+#include "ExtractHelper.h"
 #include <erofs/print.h>
 #include <erofs/config.h>
 #include <stdio.h>
@@ -97,7 +98,7 @@ EROFS_API int erofs_extract_path(const char* target_path, bool recursive) {
         return RET_EXTRACT_CREATE_DIR_FAIL;
     }
 
-    err = initErofsNodeByTargetPath(target_path);
+    err = initErofsNodeByTargetPath(string(target_path));
     if (err) {
         ctx->setLastError("Failed to initialize target node");
         return RET_EXTRACT_INIT_NODE_FAIL;
@@ -156,7 +157,7 @@ EROFS_API int erofs_extract_set_options(const erofs_extract_options* options) {
 
 EROFS_API const char* erofs_extract_get_error(void) {
     auto ctx = ExtractOperation::getInstance();
-    return ctx->getLastError().c_str();
+    return ctx->getLastError();
 }
 
 EROFS_API void erofs_extract_cleanup(void) {
