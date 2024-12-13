@@ -20,6 +20,7 @@ typedef struct erofs_extract_options {
     bool silent;
     unsigned int num_threads;
     const char* config_path;
+    int debug_level;
 } erofs_extract_options;
 
 // API Functions
