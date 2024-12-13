@@ -134,8 +134,6 @@ EROFS_API int erofs_extract_set_options(const erofs_extract_options* options) {
 
     auto ctx = ExtractOperation::getInstance();
     ctx->overwrite = options->overwrite;
-    ctx->preserve_owner = options->preserve_owner;
-    ctx->preserve_perms = options->preserve_perms;
     ctx->isSilent = options->silent;
 
     if (options->num_threads > 0) {
