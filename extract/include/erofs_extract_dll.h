@@ -4,20 +4,16 @@
 #include <stdint.h>
 #include "ExtractState.h"
 
-#ifdef _MSC_VER
-    #ifdef EROFS_EXTRACT_EXPORTS
-        #define EROFS_API __declspec(dllexport)
-    #else
-        #define EROFS_API __declspec(dllimport)
-    #endif
-    #define EROFS_CALL __cdecl
-#else
-    #define EROFS_API __attribute__((visibility("default")))
-    #define EROFS_CALL
-#endif
-
 #ifdef __cplusplus
 extern "C" {
+#endif
+
+#ifdef _WIN32
+    #define EROFS_API __declspec(dllexport)
+    #define EROFS_CALL __cdecl
+#else
+    #define EROFS_API
+    #define EROFS_CALL
 #endif
 
 typedef struct erofs_extract_options {
