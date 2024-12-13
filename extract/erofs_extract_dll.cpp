@@ -67,25 +67,16 @@ EROFS_API int EROFS_CALL erofs_extract_init(const char* image_path) {
         return RET_EXTRACT_INIT_FAIL;
     }
 
-    try {
-        printf("Initializing EROFS config...\n");
-        erofs_init_configure();
-        cfg.c_dbg_lvl = EROFS_ERR;
+    printf("Initializing EROFS config...\n");
+    erofs_init_configure();
+    cfg.c_dbg_lvl = EROFS_ERR;
 
-        printf("Setting default configuration...\n");
-        init_default_config();
+    printf("Setting default configuration...\n");
+    init_default_config();
 
-        printf("Setting image path...\n");
-        g_ctx->op->setImgPath(image_path);
-        g_ctx->op->setLastError("");
-    } catch (const std::exception& e) {
-        char errBuf[256];
-        snprintf(errBuf, sizeof(errBuf), "Exception during initialization: %s", e.what());
-        g_ctx->op->setLastError(errBuf);
-        delete g_ctx;
-        g_ctx = nullptr;
-        return RET_EXTRACT_INIT_FAIL;
-    }
+    printf("Setting image path...\n");
+    g_ctx->op->setImgPath(image_path);
+    g_ctx->op->setLastError("");
 
     // Check if file exists first
     FILE* f = fopen(image_path, "rb");
