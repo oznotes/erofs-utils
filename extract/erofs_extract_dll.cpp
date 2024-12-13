@@ -4,11 +4,11 @@
 #include "ExtractCommon.h"
 #include "ExtractOperation.h"
 #include "ExtractHelper.h"
+#include <erofs/internal.h>
 #include "Logging.h"
 #include "Utils.h"
 #include <erofs/print.h>
 #include <erofs/config.h>
-#include <erofs/internal.h>
 #include <stdio.h>
 #include <memory>
 #include <string>
@@ -18,7 +18,7 @@
 using namespace skkk;
 
 extern struct erofs_configure cfg;
-static struct erofs_sb_info g_sbi;
+extern struct erofs_sb_info g_sbi;
 
 // Forward declarations
 namespace skkk {
