@@ -36,18 +36,19 @@ EROFS_API int __cdecl erofs_extract_init(const char* image_path) {
         return RET_EXTRACT_INIT_FAIL;
     }
 
+    // Check if already initialized
     if (g_ctx) {
         printf("Already initialized\n");
         return RET_EXTRACT_INIT_FAIL;
     }
 
-    try {
-        g_ctx = new ExtractContext();
-    } catch (...) {
+    // Create context
+    g_ctx = new(std::nothrow) ExtractContext();
+    if (!g_ctx) {
         printf("Failed to create context\n");
         return RET_EXTRACT_INIT_FAIL;
     }
-    
+
     // Initialize erofs config
     erofs_init_configure();
     cfg.c_dbg_lvl = EROFS_ERR;
