@@ -281,6 +281,25 @@ EROFS_API void __cdecl erofs_extract_cleanup(void) {
     }
 }
 
+// Add this simple test function to the DLL
+EROFS_API int EROFS_CALL erofs_test_function(int input, int* output) {
+    if (!g_logFile) {
+        g_logFile = fopen("erofs_extract.log", "w");
+    }
+    
+    if (g_logFile) {
+        fprintf(g_logFile, "Test function called with input: %d\n", input);
+        fflush(g_logFile);
+    }
+
+    if (!output) {
+        return -1;
+    }
+
+    *output = input * 2;
+    return 0;
+}
+
 } // extern "C"
 
 #endif // EROFS_EXTRACT_EXPORTS

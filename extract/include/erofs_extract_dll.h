@@ -39,6 +39,7 @@ EROFS_API int EROFS_CALL erofs_extract_all(void);
 EROFS_API int EROFS_CALL erofs_extract_set_options(const erofs_extract_options* options);
 EROFS_API const char* EROFS_CALL erofs_extract_get_error(void);
 EROFS_API void EROFS_CALL erofs_extract_cleanup(void);
+EROFS_API int EROFS_CALL erofs_test_function(int input, int* output);
 
 #ifdef __cplusplus
 }
