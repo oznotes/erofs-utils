@@ -1,7 +1,9 @@
 #ifndef EROFS_EXTRACT_DLL_H
 #define EROFS_EXTRACT_DLL_H
 
-#include "ExtractState.h"  // Include this first to get the enums
+#include <stdint.h>
+
+#include "ExtractState.h"
 
 #ifdef EROFS_EXTRACT_EXPORTS
 #define EROFS_API __declspec(dllexport) __attribute__((cdecl))

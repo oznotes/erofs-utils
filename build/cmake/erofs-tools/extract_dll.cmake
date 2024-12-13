@@ -11,7 +11,6 @@ target_include_directories(${TARGET_extract_dll} PRIVATE
         ${common_headers}
 )
 
-# Add debug definitions
 target_compile_definitions(${TARGET_extract_dll} PRIVATE
         EROFS_EXTRACT_EXPORTS=1
         _FILE_OFFSET_BITS=64
@@ -21,38 +20,30 @@ target_compile_definitions(${TARGET_extract_dll} PRIVATE
         _DEBUG
 )
 
-# Compiler options
 target_compile_options(${TARGET_extract_dll} PRIVATE
         -fvisibility=hidden
-        -g  # Add debug symbols
-        -O0 # No optimization for better debugging
+        -g
+        -O0
         -Wall
         -Wextra
 )
 
-# Link with required libraries
 target_link_libraries(${TARGET_extract_dll} PRIVATE
         ${common_static_link_lib}
 )
 
-# DLL specific settings
 set_target_properties(${TARGET_extract_dll} PROPERTIES
         PREFIX ""
         OUTPUT_NAME "cygerofs_extract"
         LINK_FLAGS "-Wl,--exclude-all-symbols -Wl,--enable-auto-import"
-        DEBUG_POSTFIX "d"  # Adds 'd' suffix for debug builds
+        DEBUG_POSTFIX "d"
 )
 
+# Add test program
+add_executable(test_dll ${TARGET_SRC_DIR}/test_dll.cpp)
+target_link_libraries(test_dll PRIVATE ${TARGET_extract_dll})
 # Installation
 install(TARGETS ${TARGET_extract_dll}
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib
 )
-
-# Generate PDB files for debugging on Windows
-if(MSVC)
-    set_target_properties(${TARGET_extract_dll} PROPERTIES 
-        COMPILE_PDB_NAME "${TARGET_extract_dll}"
-        COMPILE_PDB_OUTPUT_DIR "${CMAKE_BINARY_DIR}"
-    )
-endif()
