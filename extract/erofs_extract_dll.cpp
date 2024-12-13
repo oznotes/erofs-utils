@@ -84,9 +84,13 @@ EROFS_API int erofs_extract_set_outdir(const char* out_dir) {
         return RET_EXTRACT_CONFIG_FAIL;
     }
 
-    auto ctx = ExtractOperation::getInstance();
-    ctx->setOutDir(out_dir);
-    int rc = ctx->initOutDir();
+    if (!g_ctx || !g_ctx->initialized) {
+        printf("DLL not initialized\n");
+        return RET_EXTRACT_CONFIG_FAIL;
+    }
+
+    g_ctx->op->setOutDir(out_dir);
+    int rc = g_ctx->op->initOutDir();
     if (!rc) {
         return RET_EXTRACT_CONFIG_FAIL;
     }
@@ -98,49 +102,57 @@ EROFS_API int erofs_extract_path(const char* target_path, bool recursive) {
         return RET_EXTRACT_INIT_NODE_FAIL;
     }
 
-    auto ctx = ExtractOperation::getInstance();
-    ctx->targetPath = target_path;
-    ctx->check_decomp = true;
-    ctx->isExtractTarget = true;
-    ctx->targetConfigRecurse = recursive;
+    if (!g_ctx || !g_ctx->initialized) {
+        printf("DLL not initialized\n");
+        return RET_EXTRACT_INIT_NODE_FAIL;
+    }
 
-    int err = ctx->createExtractConfigDir() & ctx->createExtractOutDir();
+    g_ctx->op->targetPath = target_path;
+    g_ctx->op->check_decomp = true;
+    g_ctx->op->isExtractTarget = true;
+    g_ctx->op->targetConfigRecurse = recursive;
+
+    int err = g_ctx->op->createExtractConfigDir() & g_ctx->op->createExtractOutDir();
     if (err) {
-        ctx->setLastError("Failed to create output directories");
+        g_ctx->op->setLastError("Failed to create output directories");
         return RET_EXTRACT_CREATE_DIR_FAIL;
     }
 
     err = initErofsNodeByTargetPath(string(target_path));
     if (err) {
-        ctx->setLastError("Failed to initialize target node");
+        g_ctx->op->setLastError("Failed to initialize target node");
         return RET_EXTRACT_INIT_NODE_FAIL;
     }
 
-    ctx->extractFsConfigAndSelinuxLabelAndFsOptions();
-    ctx->extractErofsNode(ctx->isSilent);
+    g_ctx->op->extractFsConfigAndSelinuxLabelAndFsOptions();
+    g_ctx->op->extractErofsNode(g_ctx->op->isSilent);
 
     return RET_EXTRACT_DONE;
 }
 
 EROFS_API int erofs_extract_all(void) {
-    auto ctx = ExtractOperation::getInstance();
-    ctx->check_decomp = true;
-    ctx->isExtractAllNode = true;
+    if (!g_ctx || !g_ctx->initialized) {
+        printf("DLL not initialized\n");
+        return RET_EXTRACT_INIT_NODE_FAIL;
+    }
 
-    int err = ctx->createExtractConfigDir() & ctx->createExtractOutDir();
+    g_ctx->op->check_decomp = true;
+    g_ctx->op->isExtractAllNode = true;
+
+    int err = g_ctx->op->createExtractConfigDir() & g_ctx->op->createExtractOutDir();
     if (err) {
         return RET_EXTRACT_CREATE_DIR_FAIL;
     }
 
-    err = ctx->initAllErofsNode();
+    err = g_ctx->op->initAllErofsNode();
     if (err) {
         return RET_EXTRACT_INIT_NODE_FAIL;
     }
 
-    ctx->extractFsConfigAndSelinuxLabelAndFsOptions();
-    ctx->useMultiThread ? 
-        ctx->extractErofsNodeMultiThread(ctx->isSilent) :
-        ctx->extractErofsNode(ctx->isSilent);
+    g_ctx->op->extractFsConfigAndSelinuxLabelAndFsOptions();
+    g_ctx->op->useMultiThread ? 
+        g_ctx->op->extractErofsNodeMultiThread(g_ctx->op->isSilent) :
+        g_ctx->op->extractErofsNode(g_ctx->op->isSilent);
 
     return RET_EXTRACT_DONE;
 }
@@ -150,14 +162,18 @@ EROFS_API int erofs_extract_set_options(const erofs_extract_options* options) {
         return RET_EXTRACT_CONFIG_FAIL;
     }
 
-    auto ctx = ExtractOperation::getInstance();
-    ctx->overwrite = options->overwrite;
-    ctx->isSilent = options->silent;
+    if (!g_ctx || !g_ctx->initialized) {
+        printf("DLL not initialized\n");
+        return RET_EXTRACT_CONFIG_FAIL;
+    }
+
+    g_ctx->op->overwrite = options->overwrite;
+    g_ctx->op->isSilent = options->silent;
 
     if (options->num_threads > 0) {
-        ctx->useMultiThread = true;
-        ctx->threadNum = options->num_threads;
-        if (ctx->threadNum > ctx->limitHardwareConcurrency) {
+        g_ctx->op->useMultiThread = true;
+        g_ctx->op->threadNum = options->num_threads;
+        if (g_ctx->op->threadNum > g_ctx->op->limitHardwareConcurrency) {
             return RET_EXTRACT_THREAD_NUM_ERROR;
         }
     }
@@ -166,8 +182,10 @@ EROFS_API int erofs_extract_set_options(const erofs_extract_options* options) {
 }
 
 EROFS_API const char* erofs_extract_get_error(void) {
-    auto ctx = ExtractOperation::getInstance();
-    return ctx->getLastError();
+    if (!g_ctx || !g_ctx->initialized) {
+        return "DLL not initialized";
+    }
+    return g_ctx->op->getLastError();
 }
 
 EROFS_API void __cdecl erofs_extract_cleanup(void) {
