@@ -42,10 +42,9 @@ target_link_libraries(${TARGET_extract_dll} PRIVATE
 set_target_properties(${TARGET_extract_dll} PROPERTIES
     PREFIX ""
     OUTPUT_NAME "cygerofs_extract"
-    LINK_FLAGS "-Wl,--exclude-all-symbols -Wl,--enable-auto-import"
+    LINK_FLAGS "-Wl,--enable-auto-import -Wl,--nxcompat"
     DEBUG_POSTFIX "d"
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/erofs-tools"
-    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/erofs-tools"
 )
 
 install(TARGETS ${TARGET_extract_dll}
