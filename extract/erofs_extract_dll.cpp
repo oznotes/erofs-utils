@@ -61,7 +61,7 @@ static void init_default_config() {
 
 extern "C" {
 
-EROFS_API int EROFS_CALL erofs_extract_init(const char* image_path) {
+int erofs_extract_init(const char* image_path) {
     log_message("Entering erofs_extract_init\n");
     if (!image_path) {
         log_message("Invalid image path\n");
@@ -147,7 +147,7 @@ EROFS_API int EROFS_CALL erofs_extract_init(const char* image_path) {
     return RET_EXTRACT_DONE;
 }
 
-EROFS_API int erofs_extract_set_outdir(const char* out_dir) {
+int erofs_extract_set_outdir(const char* out_dir) {
     if (!out_dir) {
         return RET_EXTRACT_CONFIG_FAIL;
     }
@@ -165,7 +165,7 @@ EROFS_API int erofs_extract_set_outdir(const char* out_dir) {
     return RET_EXTRACT_DONE;
 }
 
-EROFS_API int erofs_extract_path(const char* target_path, bool recursive) {
+int erofs_extract_path(const char* target_path, bool recursive) {
     if (!target_path) {
         return RET_EXTRACT_INIT_NODE_FAIL;
     }
@@ -198,7 +198,7 @@ EROFS_API int erofs_extract_path(const char* target_path, bool recursive) {
     return RET_EXTRACT_DONE;
 }
 
-EROFS_API int erofs_extract_all(void) {
+int erofs_extract_all(void) {
     if (!g_ctx || !g_ctx->initialized) {
         log_message("DLL not initialized\n");
         return RET_EXTRACT_INIT_NODE_FAIL;
@@ -225,7 +225,7 @@ EROFS_API int erofs_extract_all(void) {
     return RET_EXTRACT_DONE;
 }
 
-EROFS_API int erofs_extract_set_options(const erofs_extract_options* options) {
+int erofs_extract_set_options(const erofs_extract_options* options) {
     if (!options) {
         return RET_EXTRACT_CONFIG_FAIL;
     }
@@ -253,7 +253,7 @@ EROFS_API int erofs_extract_set_options(const erofs_extract_options* options) {
     return RET_EXTRACT_DONE;
 }
 
-EROFS_API const char* EROFS_CALL erofs_extract_get_error(void) {
+const char* erofs_extract_get_error(void) {
     if (!g_ctx) {
         static const char* not_init = "DLL not initialized (context is null)";
         return not_init;
@@ -266,7 +266,7 @@ EROFS_API const char* EROFS_CALL erofs_extract_get_error(void) {
     return err && *err ? err : "Unknown error";
 }
 
-EROFS_API void __cdecl erofs_extract_cleanup(void) {
+void erofs_extract_cleanup(void) {
     if (g_ctx) {
         erofs_dev_close(&g_sbi);
         erofs_blob_closeall(&g_sbi);
@@ -282,7 +282,7 @@ EROFS_API void __cdecl erofs_extract_cleanup(void) {
 }
 
 // Add this simple test function to the DLL
-EROFS_API int EROFS_CALL erofs_test_function(int input, int* output) {
+int erofs_test_function(int input, int* output) {
     if (!g_logFile) {
         g_logFile = fopen("erofs_extract.log", "w");
     }
@@ -301,7 +301,7 @@ EROFS_API int EROFS_CALL erofs_test_function(int input, int* output) {
 }
 
 // Add this extremely simple test function
-EROFS_API int EROFS_CALL erofs_test_simple(void) {
+int erofs_test_simple(void) {
     return 42;  // Just return a constant value
 }
 
