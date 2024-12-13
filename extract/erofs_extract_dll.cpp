@@ -29,6 +29,22 @@ struct ExtractContext {
 };
 
 static ExtractContext* g_ctx = nullptr;
+static FILE* g_logFile = NULL;
+
+static void log_message(const char* format, ...) {
+    if (!g_logFile) {
+        g_logFile = fopen("erofs_extract.log", "w");
+        if (!g_logFile) return;
+    }
+    
+    va_list args;
+    va_start(args, format);
+    vfprintf(g_logFile, format, args);
+    va_end(args);
+    
+    // Flush immediately to ensure we see output even if crash occurs
+    fflush(g_logFile);
+}
 
 static void init_default_config() {
     if (g_ctx && g_ctx->op) {
@@ -46,35 +62,35 @@ static void init_default_config() {
 extern "C" {
 
 EROFS_API int EROFS_CALL erofs_extract_init(const char* image_path) {
-    printf("Entering erofs_extract_init\n");
+    log_message("Entering erofs_extract_init\n");
     if (!image_path) {
-        printf("Invalid image path\n");
+        log_message("Invalid image path\n");
         g_ctx->op->setLastError("Invalid image path (null)");
         return RET_EXTRACT_INIT_FAIL;
     }
-    printf("Image path: %s\n", image_path);
+    log_message("Image path: %s\n", image_path);
 
     if (g_ctx) {
-        printf("Already initialized\n");
+        log_message("Already initialized\n");
         g_ctx->op->setLastError("Context already initialized");
         return RET_EXTRACT_INIT_FAIL;
     }
 
-    printf("Creating context...\n");
+    log_message("Creating context...\n");
     g_ctx = new(std::nothrow) ExtractContext();
     if (!g_ctx) {
-        printf("Failed to create context\n");
+        log_message("Failed to create context\n");
         return RET_EXTRACT_INIT_FAIL;
     }
 
-    printf("Initializing EROFS config...\n");
+    log_message("Initializing EROFS config...\n");
     erofs_init_configure();
     cfg.c_dbg_lvl = EROFS_ERR;
 
-    printf("Setting default configuration...\n");
+    log_message("Setting default configuration...\n");
     init_default_config();
 
-    printf("Setting image path...\n");
+    log_message("Setting image path...\n");
     g_ctx->op->setImgPath(image_path);
     g_ctx->op->setLastError("");
 
@@ -90,7 +106,7 @@ EROFS_API int EROFS_CALL erofs_extract_init(const char* image_path) {
     }
     fclose(f);
 
-    printf("Opening device...\n");
+    log_message("Opening device...\n");
     // Open the device
     int err = erofs_dev_open(&g_sbi, image_path, O_RDONLY);
     if (err) {
@@ -102,7 +118,7 @@ EROFS_API int EROFS_CALL erofs_extract_init(const char* image_path) {
         return RET_EXTRACT_INIT_FAIL;
     }
 
-    printf("Reading superblock...\n");
+    log_message("Reading superblock...\n");
     // Read superblock
     err = erofs_read_superblock(&g_sbi);
     if (err) {
@@ -115,7 +131,7 @@ EROFS_API int EROFS_CALL erofs_extract_init(const char* image_path) {
         return RET_EXTRACT_INIT_FAIL;
     }
 
-    printf("Creating directories...\n");
+    log_message("Creating directories...\n");
     // Create necessary directories
     err = g_ctx->op->createExtractConfigDir() & g_ctx->op->createExtractOutDir();
     if (err) {
@@ -127,7 +143,7 @@ EROFS_API int EROFS_CALL erofs_extract_init(const char* image_path) {
     }
 
     g_ctx->initialized = true;
-    printf("Initialization complete\n");
+    log_message("Initialization complete\n");
     return RET_EXTRACT_DONE;
 }
 
@@ -137,7 +153,7 @@ EROFS_API int erofs_extract_set_outdir(const char* out_dir) {
     }
 
     if (!g_ctx || !g_ctx->initialized) {
-        printf("DLL not initialized\n");
+        log_message("DLL not initialized\n");
         return RET_EXTRACT_CONFIG_FAIL;
     }
 
@@ -155,7 +171,7 @@ EROFS_API int erofs_extract_path(const char* target_path, bool recursive) {
     }
 
     if (!g_ctx || !g_ctx->initialized) {
-        printf("DLL not initialized\n");
+        log_message("DLL not initialized\n");
         return RET_EXTRACT_INIT_NODE_FAIL;
     }
 
@@ -184,7 +200,7 @@ EROFS_API int erofs_extract_path(const char* target_path, bool recursive) {
 
 EROFS_API int erofs_extract_all(void) {
     if (!g_ctx || !g_ctx->initialized) {
-        printf("DLL not initialized\n");
+        log_message("DLL not initialized\n");
         return RET_EXTRACT_INIT_NODE_FAIL;
     }
 
@@ -215,7 +231,7 @@ EROFS_API int erofs_extract_set_options(const erofs_extract_options* options) {
     }
 
     if (!g_ctx || !g_ctx->initialized) {
-        printf("DLL not initialized\n");
+        log_message("DLL not initialized\n");
         return RET_EXTRACT_CONFIG_FAIL;
     }
 
@@ -258,6 +274,10 @@ EROFS_API void __cdecl erofs_extract_cleanup(void) {
         ExtractOperation::erofsOperationExit();
         delete g_ctx;
         g_ctx = nullptr;
+    }
+    if (g_logFile) {
+        fclose(g_logFile);
+        g_logFile = NULL;
     }
 }
 
