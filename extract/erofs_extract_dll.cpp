@@ -2,6 +2,8 @@
 
 #include "erofs_extract_dll.h"
 #include "erofs_extract_impl.h"
+#include <cstdio>
+#include <string>
 
 extern "C" {
 

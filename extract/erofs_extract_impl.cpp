@@ -9,6 +9,7 @@
 #include <erofs/config.h>
 #include <thread>
 #include <string>
+#include <cstdio>
 
 using namespace skkk;
 
