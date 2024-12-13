@@ -3,6 +3,10 @@ set(TARGET_SRC_DIR "${PROJECT_ROOT_DIR}/extract")
 
 add_library(${TARGET_extract_dll} SHARED
     ${TARGET_SRC_DIR}/erofs_extract_dll.cpp
+    ${TARGET_SRC_DIR}/ExtractOperation.cpp
+    ${TARGET_SRC_DIR}/ExtractHelper.cpp
+    ${TARGET_SRC_DIR}/ErofsNode.cpp
+    ${TARGET_SRC_DIR}/ErofsHardlinkHandle.cpp
 )
 
 target_include_directories(${TARGET_extract_dll} PRIVATE
