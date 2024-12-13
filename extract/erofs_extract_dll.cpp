@@ -25,6 +25,8 @@ struct ExtractContext {
     }
 };
 
+static ExtractContext* g_ctx = nullptr;
+
 extern "C" {
 
 EROFS_API int __cdecl erofs_extract_init(const char* image_path) {
@@ -34,30 +36,45 @@ EROFS_API int __cdecl erofs_extract_init(const char* image_path) {
         return RET_EXTRACT_INIT_FAIL;
     }
 
-    ExtractContext* ctx = new ExtractContext();
+    if (g_ctx) {
+        printf("Already initialized\n");
+        return RET_EXTRACT_INIT_FAIL;
+    }
+
+    try {
+        g_ctx = new ExtractContext();
+    } catch (...) {
+        printf("Failed to create context\n");
+        return RET_EXTRACT_INIT_FAIL;
+    }
     
     // Initialize erofs config
     erofs_init_configure();
     cfg.c_dbg_lvl = EROFS_ERR;
 
-    ctx->op->setImgPath(image_path);
-    ctx->op->setLastError("");
+    g_ctx->op->setImgPath(image_path);
+    g_ctx->op->setLastError("");
 
     // Open the device
     int err = erofs_dev_open(&g_sbi, image_path, O_RDONLY);
     if (err) {
-        ctx->op->setLastError("Failed to open image file");
+        g_ctx->op->setLastError("Failed to open image file");
+        delete g_ctx;
+        g_ctx = nullptr;
         return RET_EXTRACT_INIT_FAIL;
     }
 
     // Read superblock
     err = erofs_read_superblock(&g_sbi);
     if (err) {
-        ctx->op->setLastError("Failed to read superblock");
+        g_ctx->op->setLastError("Failed to read superblock");
+        erofs_dev_close(&g_sbi);
+        delete g_ctx;
+        g_ctx = nullptr;
         return RET_EXTRACT_INIT_FAIL;
     }
 
-    ctx->initialized = true;
+    g_ctx->initialized = true;
     return RET_EXTRACT_DONE;
 }
 
@@ -152,11 +169,15 @@ EROFS_API const char* erofs_extract_get_error(void) {
     return ctx->getLastError();
 }
 
-EROFS_API void erofs_extract_cleanup(void) {
-    erofs_dev_close(&g_sbi);
-    erofs_blob_closeall(&g_sbi);
-    erofs_exit_configure();
-    ExtractOperation::erofsOperationExit();
+EROFS_API void __cdecl erofs_extract_cleanup(void) {
+    if (g_ctx) {
+        erofs_dev_close(&g_sbi);
+        erofs_blob_closeall(&g_sbi);
+        erofs_exit_configure();
+        ExtractOperation::erofsOperationExit();
+        delete g_ctx;
+        g_ctx = nullptr;
+    }
 }
 
 } // extern "C"

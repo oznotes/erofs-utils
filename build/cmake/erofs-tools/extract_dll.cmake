@@ -22,6 +22,7 @@ target_compile_definitions(${TARGET_extract_dll} PRIVATE
     _LARGEFILE64_SOURCE
     CYGWIN
     _DEBUG
+    _GNU_SOURCE
 )
 
 target_compile_options(${TARGET_extract_dll} PRIVATE
@@ -32,17 +33,19 @@ target_compile_options(${TARGET_extract_dll} PRIVATE
     -Wextra
     -fno-exceptions
     -fno-rtti
+    -fPIC
 )
 
 target_link_libraries(${TARGET_extract_dll} PRIVATE
     ${common_static_link_lib}
     erofs_static
+    iconv
 )
 
 set_target_properties(${TARGET_extract_dll} PROPERTIES
     PREFIX ""
-    OUTPUT_NAME "cygerofs_extract"
-    LINK_FLAGS "-Wl,--enable-auto-import -Wl,--nxcompat"
+    OUTPUT_NAME "erofs_extract"
+    LINK_FLAGS "-Wl,--enable-auto-import -Wl,--nxcompat -Wl,--no-undefined"
     DEBUG_POSTFIX "d"
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/erofs-tools"
 )
