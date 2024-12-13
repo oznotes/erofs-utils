@@ -12,11 +12,7 @@
     #endif
     #define EROFS_CALL __cdecl
 #else
-    #ifdef EROFS_EXTRACT_EXPORTS
-        #define EROFS_API __declspec(dllexport) __attribute__((cdecl))
-    #else
-        #define EROFS_API __declspec(dllimport) __attribute__((cdecl))
-    #endif
+    #define EROFS_API __attribute__((visibility("default")))
     #define EROFS_CALL
 #endif
 
