@@ -23,7 +23,6 @@ int erofs_extract_init_impl(const char* image_path) {
     printf("Entering erofs_extract_init_impl\n");
     if (!image_path) {
         printf("Invalid image path in impl\n");
-        set_error("Invalid image path");
         return RET_EXTRACT_INIT_FAIL;
     }
     printf("Initializing erofs config\n");

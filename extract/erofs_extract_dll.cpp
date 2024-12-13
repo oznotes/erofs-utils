@@ -11,7 +11,6 @@ EROFS_API int __cdecl erofs_extract_init(const char* image_path) {
     printf("Entering erofs_extract_init\n");
     if (!image_path) {
         printf("Invalid image path\n");
-        set_error("Invalid image path");
         return -1;
     }
     printf("Image path valid\n");
