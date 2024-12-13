@@ -19,7 +19,6 @@ typedef struct erofs_extract_options {
     bool overwrite;
     bool silent;
     unsigned int num_threads;
-    const char* config_path;
     int debug_level;
 } erofs_extract_options;
 

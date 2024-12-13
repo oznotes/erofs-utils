@@ -39,7 +39,6 @@ static void init_default_config() {
         g_ctx->op->isSilent = false;
         g_ctx->op->isExtractTarget = false;
         g_ctx->op->isExtractAllNode = false;
-        g_ctx->op->configPath = "";
         cfg.c_dbg_lvl = EROFS_ERR;
     }
 }
@@ -204,10 +203,6 @@ EROFS_API int erofs_extract_set_options(const erofs_extract_options* options) {
 
     if (options->debug_level >= 0) {
         cfg.c_dbg_lvl = options->debug_level;
-    }
-
-    if (options->config_path) {
-        g_ctx->op->configPath = options->config_path;
     }
 
     if (options->num_threads > 0) {
