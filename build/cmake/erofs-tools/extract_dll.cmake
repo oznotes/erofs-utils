@@ -37,6 +37,8 @@ set_target_properties(${TARGET_extract_dll} PROPERTIES
         OUTPUT_NAME "cygerofs_extract"
         LINK_FLAGS "-Wl,--exclude-all-symbols -Wl,--enable-auto-import"
         DEBUG_POSTFIX "d"
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+        ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
 )
 
 # Installation
