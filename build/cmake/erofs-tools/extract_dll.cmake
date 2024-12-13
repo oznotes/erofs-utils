@@ -39,9 +39,6 @@ set_target_properties(${TARGET_extract_dll} PROPERTIES
         DEBUG_POSTFIX "d"
 )
 
-# Add test program
-add_executable(test_dll ${TARGET_SRC_DIR}/test_dll.cpp)
-target_link_libraries(test_dll PRIVATE ${TARGET_extract_dll})
 # Installation
 install(TARGETS ${TARGET_extract_dll}
         RUNTIME DESTINATION bin
