@@ -73,6 +73,11 @@ static void init_default_config() {
 
 extern "C" {
 
+int erofs_test_alive(void) {
+    // No dependencies, no file operations, just return a value
+    return 123;
+}
+
 int erofs_extract_init(const char* image_path) {
     log_message("Entering erofs_extract_init\n");
     if (!image_path) {
