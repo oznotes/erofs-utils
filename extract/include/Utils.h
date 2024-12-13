@@ -99,7 +99,7 @@ static inline bool CharsetConvert(const char *fromCharset, const char *toCharset
 	if (conv != reinterpret_cast<iconv_t>(-1)) {
 		char *_input = const_cast<char *>(input);
 		char *_output = const_cast<char *>(output);
-		if (iconv(conv, &_input, &inputLen, &_output, outputLen) != -1) {
+		if (iconv(conv, &_input, &inputLen, &_output, outputLen) != (size_t)-1) {
 			ret = true;
 		}
 		iconv_close(conv);

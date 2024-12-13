@@ -25,12 +25,6 @@ struct ExtractContext {
     }
 };
 
-static void set_context_error(ExtractContext* ctx, const char* msg) {
-    if (ctx) {
-        ctx->last_error = msg ? msg : "Unknown error";
-    }
-}
-
 extern "C" {
 
 EROFS_API int __cdecl erofs_extract_init(const char* image_path) {
