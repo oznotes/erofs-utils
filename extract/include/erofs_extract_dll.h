@@ -5,6 +5,11 @@
 #include "ExtractState.h"
 #include "ExtractCommon.h"
 
+- // Test functions
+- int erofs_test_simple(void);
+- int erofs_test_function(int input, int* output);
+- int erofs_test_alive(void);
+
 #ifdef __cplusplus
 extern "C" {
 #endif
