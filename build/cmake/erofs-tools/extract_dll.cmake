@@ -52,5 +52,4 @@ set_target_properties(${TARGET_extract_dll} PROPERTIES
 
 install(TARGETS ${TARGET_extract_dll}
     RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
 )

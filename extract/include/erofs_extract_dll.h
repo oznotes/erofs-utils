@@ -19,6 +19,7 @@ typedef struct erofs_extract_options {
     bool overwrite;
     bool silent;
     unsigned int num_threads;
+    const char* config_path;
 } erofs_extract_options;
 
 // API Functions
@@ -26,7 +27,6 @@ EROFS_API int __cdecl erofs_extract_init(const char* image_path);
 EROFS_API int __cdecl erofs_extract_set_outdir(const char* out_dir);
 EROFS_API int __cdecl erofs_extract_path(const char* target_path, bool recursive);
 EROFS_API int __cdecl erofs_extract_all(void);
-EROFS_API int __cdecl erofs_extract_configs(void);
 EROFS_API int __cdecl erofs_extract_set_options(const erofs_extract_options* options);
 EROFS_API const char* __cdecl erofs_extract_get_error(void);
 EROFS_API void __cdecl erofs_extract_cleanup(void);

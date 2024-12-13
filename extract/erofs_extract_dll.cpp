@@ -10,6 +10,9 @@
 
 using namespace skkk;
 
+extern struct erofs_configure cfg;
+static struct erofs_sb_info g_sbi;
+
 // Internal context structure
 struct ExtractContext {
     std::string last_error;
@@ -27,6 +30,18 @@ struct ExtractContext {
 
 static ExtractContext* g_ctx = nullptr;
 
+static void init_default_config() {
+    if (g_ctx && g_ctx->op) {
+        g_ctx->op->check_decomp = true;
+        g_ctx->op->useMultiThread = false;
+        g_ctx->op->threadNum = 1;
+        g_ctx->op->overwrite = false;
+        g_ctx->op->isSilent = false;
+        g_ctx->op->isExtractTarget = false;
+        g_ctx->op->isExtractAllNode = false;
+    }
+}
+
 extern "C" {
 
 EROFS_API int __cdecl erofs_extract_init(const char* image_path) {
@@ -36,13 +51,11 @@ EROFS_API int __cdecl erofs_extract_init(const char* image_path) {
         return RET_EXTRACT_INIT_FAIL;
     }
 
-    // Check if already initialized
     if (g_ctx) {
         printf("Already initialized\n");
         return RET_EXTRACT_INIT_FAIL;
     }
 
-    // Create context
     g_ctx = new(std::nothrow) ExtractContext();
     if (!g_ctx) {
         printf("Failed to create context\n");
@@ -53,13 +66,18 @@ EROFS_API int __cdecl erofs_extract_init(const char* image_path) {
     erofs_init_configure();
     cfg.c_dbg_lvl = EROFS_ERR;
 
+    // Set default configuration
+    init_default_config();
+
     g_ctx->op->setImgPath(image_path);
     g_ctx->op->setLastError("");
 
     // Open the device
     int err = erofs_dev_open(&g_sbi, image_path, O_RDONLY);
     if (err) {
-        g_ctx->op->setLastError("Failed to open image file");
+        char errBuf[256];
+        snprintf(errBuf, sizeof(errBuf), "Failed to open image file: %d", err);
+        g_ctx->op->setLastError(errBuf);
         delete g_ctx;
         g_ctx = nullptr;
         return RET_EXTRACT_INIT_FAIL;
@@ -68,11 +86,23 @@ EROFS_API int __cdecl erofs_extract_init(const char* image_path) {
     // Read superblock
     err = erofs_read_superblock(&g_sbi);
     if (err) {
-        g_ctx->op->setLastError("Failed to read superblock");
+        char errBuf[256];
+        snprintf(errBuf, sizeof(errBuf), "Failed to read superblock: %d", err);
+        g_ctx->op->setLastError(errBuf);
         erofs_dev_close(&g_sbi);
         delete g_ctx;
         g_ctx = nullptr;
         return RET_EXTRACT_INIT_FAIL;
+    }
+
+    // Create necessary directories
+    err = g_ctx->op->createExtractConfigDir() & g_ctx->op->createExtractOutDir();
+    if (err) {
+        g_ctx->op->setLastError("Failed to create output directories");
+        erofs_dev_close(&g_sbi);
+        delete g_ctx;
+        g_ctx = nullptr;
+        return RET_EXTRACT_CREATE_DIR_FAIL;
     }
 
     g_ctx->initialized = true;
