@@ -27,11 +27,11 @@ target_compile_definitions(${TARGET_extract_dll} PRIVATE
     CYGWIN
 )
 
+# Set DLL properties
 set_target_properties(${TARGET_extract_dll} PROPERTIES
     PREFIX "cyg"
     OUTPUT_NAME "erofs_extract"
-    VERSION ${PROJECT_VERSION}
-    SOVERSION ${PROJECT_VERSION_MAJOR}
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/erofs-tools"
 )
 
 install(TARGETS ${TARGET_extract_dll}
