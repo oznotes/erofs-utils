@@ -45,34 +45,52 @@ static void init_default_config() {
 
 extern "C" {
 
-EROFS_API int __cdecl erofs_extract_init(const char* image_path) {
+EROFS_API int EROFS_CALL erofs_extract_init(const char* image_path) {
     printf("Entering erofs_extract_init\n");
     if (!image_path) {
         printf("Invalid image path\n");
         return RET_EXTRACT_INIT_FAIL;
     }
+    printf("Image path: %s\n", image_path);
 
     if (g_ctx) {
         printf("Already initialized\n");
         return RET_EXTRACT_INIT_FAIL;
     }
 
+    printf("Creating context...\n");
     g_ctx = new(std::nothrow) ExtractContext();
     if (!g_ctx) {
         printf("Failed to create context\n");
         return RET_EXTRACT_INIT_FAIL;
     }
 
+    printf("Initializing EROFS config...\n");
     // Initialize erofs config
     erofs_init_configure();
     cfg.c_dbg_lvl = EROFS_ERR;
 
+    printf("Setting default configuration...\n");
     // Set default configuration
     init_default_config();
 
+    printf("Setting image path...\n");
     g_ctx->op->setImgPath(image_path);
     g_ctx->op->setLastError("");
 
+    // Check if file exists first
+    FILE* f = fopen(image_path, "rb");
+    if (!f) {
+        char errBuf[256];
+        snprintf(errBuf, sizeof(errBuf), "Image file not found or cannot be opened: %s", image_path);
+        g_ctx->op->setLastError(errBuf);
+        delete g_ctx;
+        g_ctx = nullptr;
+        return RET_EXTRACT_INIT_FAIL;
+    }
+    fclose(f);
+
+    printf("Opening device...\n");
     // Open the device
     int err = erofs_dev_open(&g_sbi, image_path, O_RDONLY);
     if (err) {
@@ -84,6 +102,7 @@ EROFS_API int __cdecl erofs_extract_init(const char* image_path) {
         return RET_EXTRACT_INIT_FAIL;
     }
 
+    printf("Reading superblock...\n");
     // Read superblock
     err = erofs_read_superblock(&g_sbi);
     if (err) {
@@ -96,6 +115,7 @@ EROFS_API int __cdecl erofs_extract_init(const char* image_path) {
         return RET_EXTRACT_INIT_FAIL;
     }
 
+    printf("Creating directories...\n");
     // Create necessary directories
     err = g_ctx->op->createExtractConfigDir() & g_ctx->op->createExtractOutDir();
     if (err) {
@@ -107,6 +127,7 @@ EROFS_API int __cdecl erofs_extract_init(const char* image_path) {
     }
 
     g_ctx->initialized = true;
+    printf("Initialization complete\n");
     return RET_EXTRACT_DONE;
 }
 
