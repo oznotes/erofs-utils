@@ -1,7 +1,6 @@
 #ifdef EROFS_EXTRACT_EXPORTS
 
 #include "erofs_extract_dll.h"
-#include "erofs_extract_impl.h"
 #include "ExtractOperation.h"
 #include <erofs/print.h>
 #include <erofs/config.h>
