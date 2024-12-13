@@ -3,6 +3,8 @@
 #include "erofs_extract_dll.h"
 #include "ExtractOperation.h"
 #include "ExtractHelper.h"
+#include "Logging.h"
+#include "Utils.h"
 #include <erofs/print.h>
 #include <erofs/config.h>
 #include <erofs/internal.h>
@@ -16,6 +18,11 @@ using namespace skkk;
 
 extern struct erofs_configure cfg;
 static struct erofs_sb_info g_sbi;
+
+// Forward declarations
+namespace skkk {
+    int initErofsNodeByTargetPath(const std::string& targetPath);
+}
 
 // Internal context structure
 struct ExtractContext {
@@ -190,7 +197,7 @@ int erofs_extract_path(const char* target_path, bool recursive) {
         return RET_EXTRACT_CREATE_DIR_FAIL;
     }
 
-    err = initErofsNodeByTargetPath(string(target_path));
+    err = initErofsNodeByTargetPath(std::string(target_path));
     if (err) {
         g_ctx->op->setLastError("Failed to initialize target node");
         return RET_EXTRACT_INIT_NODE_FAIL;
@@ -306,6 +313,10 @@ int erofs_test_function(int input, int* output) {
 
 // Add this extremely simple test function
 int erofs_test_simple(void) {
+    if (g_logFile) {
+        fprintf(g_logFile, "Test simple function called\n");
+        fflush(g_logFile);
+    }
     return 42;  // Just return a constant value
 }
 
