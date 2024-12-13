@@ -3,18 +3,11 @@
 
 #include <stdint.h>
 #include "ExtractState.h"
+#include "ExtractCommon.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-// Return codes
-#define RET_EXTRACT_DONE              0
-#define RET_EXTRACT_INIT_FAIL         1
-#define RET_EXTRACT_CONFIG_FAIL       2
-#define RET_EXTRACT_CREATE_DIR_FAIL   3
-#define RET_EXTRACT_INIT_NODE_FAIL    4
-#define RET_EXTRACT_THREAD_NUM_ERROR  5
 
 typedef struct erofs_extract_options {
     bool overwrite;
