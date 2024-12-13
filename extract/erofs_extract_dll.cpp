@@ -300,6 +300,11 @@ EROFS_API int EROFS_CALL erofs_test_function(int input, int* output) {
     return 0;
 }
 
+// Add this extremely simple test function
+EROFS_API int EROFS_CALL erofs_test_simple(void) {
+    return 42;  // Just return a constant value
+}
+
 } // extern "C"
 
 #endif // EROFS_EXTRACT_EXPORTS
