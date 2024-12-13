@@ -8,10 +8,14 @@
 #include <erofs/internal.h>
 #include <stdio.h>
 #include <memory>
+#include <string>
+#include <stdarg.h>
+#include <fcntl.h>
 
 using namespace skkk;
 
 extern struct erofs_configure cfg;
+static struct erofs_sb_info g_sbi;
 
 // Internal context structure
 struct ExtractContext {
