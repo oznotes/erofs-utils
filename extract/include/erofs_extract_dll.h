@@ -28,6 +28,7 @@ void erofs_extract_cleanup(void);
 // Test functions
 int erofs_test_simple(void);
 int erofs_test_function(int input, int* output);
+int erofs_test_alive(void);
 
 #ifdef __cplusplus
 }
