@@ -1,39 +1,46 @@
 set(TARGET_extract_dll "erofs_extract")
+set(TARGET_SRC_DIR "${PROJECT_ROOT_DIR}/extract")
 
+# DLL-specific CMake configuration
 add_library(${TARGET_extract_dll} SHARED
-    ${PROJECT_ROOT_DIR}/extract/erofs_extract_dll.cpp
-    ${PROJECT_ROOT_DIR}/extract/ExtractOperation.cpp
-    ${PROJECT_ROOT_DIR}/extract/ExtractHelper.cpp
-    ${PROJECT_ROOT_DIR}/extract/ErofsNode.cpp
-    ${PROJECT_ROOT_DIR}/extract/ErofsHardlinkHandle.cpp
+        ${TARGET_SRC_DIR}/erofs_extract_dll.cpp
+        ${TARGET_SRC_DIR}/erofs_extract_impl.cpp
+        ${TARGET_SRC_DIR}/ExtractOperation.cpp
+        ${TARGET_SRC_DIR}/ExtractHelper.cpp
+        ${TARGET_SRC_DIR}/ErofsNode.cpp
+        ${TARGET_SRC_DIR}/ErofsHardlinkHandle.cpp
 )
 
 target_include_directories(${TARGET_extract_dll} PRIVATE
-    ${PROJECT_ROOT_DIR}/extract/include
-    ${PROJECT_ROOT_DIR}/include
-    ${common_headers}
-)
-
-target_link_libraries(${TARGET_extract_dll} PRIVATE
-    erofs_static
-    ${common_static_link_lib}
+        "${TARGET_SRC_DIR}/include"
+        ${common_headers}
 )
 
 target_compile_definitions(${TARGET_extract_dll} PRIVATE
-    EROFS_EXTRACT_EXPORTS
-    _FILE_OFFSET_BITS=64
-    _LARGEFILE_SOURCE
-    _LARGEFILE64_SOURCE
-    CYGWIN
+        EROFS_EXTRACT_EXPORTS=1
+        _FILE_OFFSET_BITS=64
+        _LARGEFILE_SOURCE
+        _LARGEFILE64_SOURCE
+        CYGWIN
 )
 
-# Set DLL properties
+target_compile_options(${TARGET_extract_dll} PRIVATE
+        -fvisibility=hidden
+)
+
+target_link_libraries(${TARGET_extract_dll} PRIVATE
+        ${common_static_link_lib}
+)
+
+# DLL specific settings
 set_target_properties(${TARGET_extract_dll} PROPERTIES
-    PREFIX "cyg"
-    OUTPUT_NAME "erofs_extract"
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/erofs-tools"
+        PREFIX ""
+        OUTPUT_NAME "cygerofs_extract"
+        LINK_FLAGS "-Wl,--exclude-all-symbols -Wl,--enable-auto-import"
 )
 
+# Installation
 install(TARGETS ${TARGET_extract_dll}
-    RUNTIME DESTINATION bin
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib
 )

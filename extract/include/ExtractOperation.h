@@ -68,7 +68,6 @@ namespace skkk {
 			string targetConfigPath;
 			bool extractOnlyConfAndSeLabel = false;
 			bool isSilent = false;
-			std::string last_error;
 
 		public:
 
@@ -135,14 +134,6 @@ namespace skkk {
 			void extractErofsNode(bool isSilent) const;
 
 			void extractErofsNodeMultiThread(bool isSilent) const;
-
-			const char* getLastError() const {
-				return last_error.c_str();
-			}
-
-			void setLastError(const char* error) {
-				last_error = error ? error : "";
-			}
 	};
 
 	/**

@@ -105,10 +105,11 @@ namespace skkk {
 	/**
 	 * Initialize the specified node
 	 *
-	 * @param target_path Path to initialize
-	 * @return Status code
+	 * @param targetPath
+	 * @return
 	 */
-	int initErofsNodeByTargetPath(const string& target_path);
+	int initErofsNodeByTargetPath(const string &targetPath);
+
 
 	/**
 	 * Initialize the specified node according to the configuration

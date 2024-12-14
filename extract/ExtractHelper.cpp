@@ -713,19 +713,20 @@ namespace skkk {
 		return rc;
 	}
 
-	int initErofsNodeByTargetPath(const string& targetPath) {
-		if (targetPath.empty()) {
-			return RET_EXTRACT_INIT_NODE_FAIL;
-		}
+	int initErofsNodeByTargetPath(const string &targetPath) {
+		int rc = RET_EXTRACT_INIT_NODE_FAIL, err;
+		if (targetPath.empty()) return RET_EXTRACT_INIT_NODE_FAIL;
 
 		initDirByFiles(nullptr, &targetPath);
-		int err = doInitNode(targetPath, true);
+		err = doInitNode(targetPath, true);
 		if (err) {
 			LOGCE("failed to initialize ErofsNode, path: '%s'", targetPath.c_str());
-			return RET_EXTRACT_INIT_NODE_FAIL;
+			goto exit;
 		}
 
-		return RET_EXTRACT_DONE;
+		rc = RET_EXTRACT_DONE;
+	exit:
+		return rc;
 	}
 
 	int initErofsNodeByTargetConfig(const string &targetPath, bool recursive) {

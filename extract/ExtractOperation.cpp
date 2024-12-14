@@ -168,7 +168,6 @@ namespace skkk {
 
 	const vector<ErofsNode *> &ExtractOperation::getErofsNodes() { return erofsNodes; }
 
-#ifdef DEBUG
 	static inline void printFsConfWithColor(const ErofsNode *eNode) {
 		LOGCI("type=%s dataLayout=%s fsConfig=[%s] seLabel=[%s]",
 			  eNode->getTypeIdCStr(),
@@ -177,7 +176,6 @@ namespace skkk {
 			  eNode->getSelinuxLabel().c_str()
 		);
 	}
-#endif
 
 	static inline void printFsConf(const ErofsNode *eNode) {
 		LOGI("type=%s dataLayout=%s fsConfig=[%s] seLabel=[%s]",
